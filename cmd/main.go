@@ -1,15 +1,37 @@
 package main
 
 import (
-	"fmt"
+	"log/slog"
+	"os"
 
 	"github.com/IldarGaleev/todo-backend-service/config"
 )
 
+func initLogging() error {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+	return nil
+}
+
 func main() {
-	err := config.LoadConfig()
+
+	err := initLogging()
+
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(config.AppConfig.ConfigStr)
+
+	err = config.LoadConfig()
+	if err != nil {
+		slog.Error(
+			"config load",
+			slog.String("error", err.Error()),
+		)
+	}
+
+	slog.Info(
+		"service start",
+		slog.String("configString", config.AppConfig.ConfigStr),
+	)
 }
