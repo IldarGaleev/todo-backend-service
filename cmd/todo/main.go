@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/IldarGaleev/todo-backend-service/config"
+	"github.com/IldarGaleev/todo-backend-service/internal/config"
 )
 
 func initLogging() error {
