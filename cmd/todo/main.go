@@ -3,7 +3,10 @@ package main
 import (
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
+	"github.com/IldarGaleev/todo-backend-service/internal/app"
 	"github.com/IldarGaleev/todo-backend-service/internal/config"
 )
 
@@ -30,8 +33,17 @@ func main() {
 		)
 	}
 
-	slog.Info(
-		"service start",
-		slog.String("configString", config.AppConfig.ConfigStr),
-	)
+	application := app.New(slog.Default(), config.AppConfig.Port)
+
+	go application.GRPCServer.MustRun()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+
+	sig := <-stop
+
+	application.GRPCServer.Stop()
+
+	slog.Info("application stopped", slog.String("signal", sig.String()))
+
 }

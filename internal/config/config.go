@@ -7,7 +7,7 @@ import (
 )
 
 type appConfig struct {
-	ConfigStr string `env:"CONFIG_STR" env-default:"Default str"`
+	Port int `env:"PORT" env-default:"9090"`
 }
 
 var AppConfig appConfig
