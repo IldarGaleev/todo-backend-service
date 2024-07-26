@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package todo_service;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/IldarGaleev/todo-backend-service;todo_protobuf_v1";
+
+service ToDoService {
+    rpc Login (LoginRequest) returns (LoginResponce);
+    rpc Logout (LogoutRequest) returns (LogoutResponce);
+    
+    rpc CreateTask (CreateTaskRequest) returns (CreateTaskResponce);
+    rpc ListTasks (ListTasksRequest) returns (ListTasksResponce);
+    rpc GetTaskById (TaskByIdRequest) returns (GetTaskByIdResponce);
+    rpc UpdateTaskById (UpdateTaskByIdRequest) returns (ChangedTaskByIdResponce);
+    rpc DeleteTaskById (TaskByIdRequest) returns (ChangedTaskByIdResponce);    
+}
+
+message LoginRequest{
+    string email = 1;
+    string password = 2;
+}
+
+message LoginResponce{
+    string token = 1;
+}
+
+message LogoutRequest{
+    string token = 1;
+}
+
+message LogoutResponce{
+    bool success = 1;
+}
+
+message CreateTaskRequest{
+    string title = 1;
+}
+
+message CreateTaskResponce{
+    uint64 task_id = 1;
+}
+
+message ListTasksRequest{
+    uint64 user_id = 1;
+}
+
+message ListTasksResponce{
+    repeated GetTaskByIdResponce tasks = 1;
+}
+
+message TaskByIdRequest{
+    uint64 task_id = 1;
+}
+
+message GetTaskByIdResponce{
+    uint64 task_id = 1;
+    string title = 2;
+}
+
+message UpdateTaskByIdRequest{
+    uint64 task_id = 1;
+    NullableString title = 2;
+    NullableBool is_done = 3;
+}
+
+message ChangedTaskByIdResponce{
+    uint64 task_id = 1;
+    bool is_success = 2;
+}
+
+
+message NullableString {
+    oneof kind {
+      google.protobuf.NullValue null = 1;
+      string data = 2;
+    }
+}
+
+message NullableBool {
+    oneof kind {
+      google.protobuf.NullValue null = 1;
+      bool data = 2;
+    }
+}
