@@ -7,42 +7,35 @@ import (
 	"syscall"
 
 	"github.com/IldarGaleev/todo-backend-service/internal/app"
-	"github.com/IldarGaleev/todo-backend-service/internal/config"
+	configApp "github.com/IldarGaleev/todo-backend-service/internal/app/config"
+	loggingApp "github.com/IldarGaleev/todo-backend-service/internal/app/logging"
 )
-
-func initLogging() error {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
-
-	return nil
-}
 
 func main() {
 
-	err := initLogging()
+	//Init app config
+	appConf := configApp.MustLoadConfig()
 
-	if err != nil {
-		panic(err)
-	}
+	//Init app logging
+	log := loggingApp.New(
+		loggingApp.EnvMode(appConf.EnvMode),
+	)
+	slog.SetDefault(log.Logging)
 
-	err = config.LoadConfig()
-	if err != nil {
-		slog.Error(
-			"config load",
-			slog.String("error", err.Error()),
-		)
-	}
+	//Init gRPC server
+	grpcApp := app.New(
+		log.Logging,
+		appConf.Port,
+	)
 
-	application := app.New(slog.Default(), config.AppConfig.Port)
-
-	go application.GRPCServer.MustRun()
+	go grpcApp.GRPCServer.MustRun()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 
 	sig := <-stop
 
-	application.GRPCServer.Stop()
+	grpcApp.GRPCServer.Stop()
 
 	slog.Info("application stopped", slog.String("signal", sig.String()))
 
