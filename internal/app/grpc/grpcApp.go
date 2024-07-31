@@ -20,9 +20,9 @@ type App struct {
 }
 
 // Create gRPC application instance
-func New(log *slog.Logger, port int) *App {
+func New(log *slog.Logger, port int, todoItemService grpcToDoServer.IToDoItemService) *App {
 	gRPCServer := grpc.NewServer()
-	grpcToDoServer.Register(gRPCServer)
+	grpcToDoServer.Register(gRPCServer, todoItemService)
 
 	return &App{
 		log:        log,
