@@ -8,7 +8,7 @@ import (
 
 	"github.com/IldarGaleev/todo-backend-service/internal/app"
 	configApp "github.com/IldarGaleev/todo-backend-service/internal/app/config"
-	loggingApp "github.com/IldarGaleev/todo-backend-service/internal/app/logging"
+	appLogging "github.com/IldarGaleev/todo-backend-service/internal/lib/logging"
 )
 
 func main() {
@@ -17,25 +17,25 @@ func main() {
 	appConf := configApp.MustLoadConfig()
 
 	//Init app logging
-	log := loggingApp.New(
-		loggingApp.EnvMode(appConf.EnvMode),
+	log := appLogging.New(
+		appLogging.EnvMode(appConf.EnvMode),
 	)
 	slog.SetDefault(log.Logging)
 
 	//Init gRPC server
 	grpcApp := app.New(
 		log.Logging,
-		appConf.Port,
+		appConf,
 	)
 
-	go grpcApp.GRPCServer.MustRun()
+	go grpcApp.MustRun()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 
 	sig := <-stop
 
-	grpcApp.GRPCServer.Stop()
+	grpcApp.Stop()
 
 	slog.Info("application stopped", slog.String("signal", sig.String()))
 

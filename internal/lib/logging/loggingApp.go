@@ -1,4 +1,4 @@
-package loggingApp
+package appLogging
 
 import (
 	"log/slog"
