@@ -57,6 +57,7 @@ message TaskByIdRequest{
 message GetTaskByIdResponce{
     uint64 task_id = 1;
     string title = 2;
+    bool is_done = 3;
 }
 
 message UpdateTaskByIdRequest{

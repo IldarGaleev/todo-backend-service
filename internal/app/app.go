@@ -7,23 +7,43 @@ package app
 import (
 	"log/slog"
 
+	configApp "github.com/IldarGaleev/todo-backend-service/internal/app/config"
 	grpcApp "github.com/IldarGaleev/todo-backend-service/internal/app/grpc"
+	todoService "github.com/IldarGaleev/todo-backend-service/internal/services/todo"
+	"github.com/IldarGaleev/todo-backend-service/internal/storage/fakedb"
 )
 
 // Main application
 type App struct {
-	GRPCServer *grpcApp.App
+	grpcServer *grpcApp.App
+	// todoItemsService *todoService.TodoService
+	storageProvider *fakedb.FakeDatabaseProvider
 }
 
 // Create main application instance
 func New(
 	log *slog.Logger,
-	grpcPort int,
+	config *configApp.AppConfig,
 ) *App {
 
-	grpcApp := grpcApp.New(log, grpcPort)
+	storageProvider := fakedb.New(log)
 
 	return &App{
-		GRPCServer: grpcApp,
+		grpcServer: grpcApp.New(
+			log,
+			config.Port,
+			todoService.New(log, storageProvider),
+		),
+		storageProvider: storageProvider,
 	}
+}
+
+func (app *App) MustRun() {
+	app.grpcServer.MustRun()
+	app.storageProvider.MustRun()
+}
+
+func (app *App) Stop() {
+	app.grpcServer.Stop()
+	app.storageProvider.Stop()
 }
