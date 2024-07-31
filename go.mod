@@ -3,7 +3,7 @@ module github.com/IldarGaleev/todo-backend-service
 go 1.22.5
 
 require (
-	github.com/IldarGaleev/todo-backend-service/pkg/grpc/proto v1.0.0
+	github.com/IldarGaleev/todo-backend-service/pkg/grpc/proto v1.0.1
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	google.golang.org/grpc v1.65.0
 )
