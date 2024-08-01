@@ -71,8 +71,8 @@ func (s *serverAPI) ListTasks(
 	for _, item := range items {
 		responseItems = append(responseItems, &todo_protobuf_v1.GetTaskByIdResponce{
 			TaskId: item.Id,
-			Title:  item.Title,
-			IsDone: item.IsComplete,
+			Title:  *item.Title,
+			IsDone: *item.IsComplete,
 		})
 	}
 	return &todo_protobuf_v1.ListTasksResponce{
@@ -91,8 +91,8 @@ func (s *serverAPI) GetTaskById(
 
 	return &todo_protobuf_v1.GetTaskByIdResponce{
 		TaskId: req.TaskId,
-		Title:  item.Title,
-		IsDone: item.IsComplete,
+		Title:  *item.Title,
+		IsDone: *item.IsComplete,
 	}, nil
 }
 
@@ -100,11 +100,11 @@ func (s *serverAPI) UpdateTaskById(
 	ctx context.Context,
 	req *todo_protobuf_v1.UpdateTaskByIdRequest,
 ) (*todo_protobuf_v1.ChangedTaskByIdResponce, error) {
-	//TODO: Nullable fields unimplemented
+
 	err := s.todoItemsService.Update(ctx, models.ToDoItem{
 		Id:         req.GetTaskId(),
-		Title:      req.GetTitle().GetData(),
-		IsComplete: req.GetIsDone().GetData(),
+		Title:      req.Title,
+		IsComplete: req.IsDone,
 	}, req.GetUserId())
 
 	if err != nil {
