@@ -49,7 +49,7 @@ func (s *serverAPI) CreateTask(
 	id, err := s.todoItemsService.Create(ctx, req.GetTitle(), req.GetUserId())
 
 	if err != nil {
-		return nil, status.Error(codes.Aborted, "Create error")
+		return nil, status.Error(codes.Internal, "Internal create error")
 	}
 
 	return &todo_protobuf_v1.CreateTaskResponce{
@@ -64,7 +64,7 @@ func (s *serverAPI) ListTasks(
 ) (*todo_protobuf_v1.ListTasksResponce, error) {
 	items, err := s.todoItemsService.GetList(ctx, req.GetUserId())
 	if err != nil {
-		return nil, status.Error(codes.Aborted, "Some error")
+		return nil, status.Error(codes.Internal, "Internal error")
 	}
 
 	responseItems := make([]*todo_protobuf_v1.GetTaskByIdResponce, 0, len(items))
