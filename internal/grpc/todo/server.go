@@ -46,8 +46,7 @@ func (s *serverAPI) CreateTask(
 	ctx context.Context,
 	req *todo_protobuf_v1.CreateTaskRequest,
 ) (*todo_protobuf_v1.CreateTaskResponce, error) {
-	//TODO: Hardcoded owner Id; middleware needed - user id
-	id, err := s.todoItemsService.Create(ctx, req.GetTitle(), 0)
+	id, err := s.todoItemsService.Create(ctx, req.GetTitle(), req.GetUserId())
 
 	if err != nil {
 		return nil, status.Error(codes.Aborted, "Create error")
@@ -63,8 +62,7 @@ func (s *serverAPI) ListTasks(
 	ctx context.Context,
 	req *todo_protobuf_v1.ListTasksRequest,
 ) (*todo_protobuf_v1.ListTasksResponce, error) {
-	//TODO: Hardcoded owner Id; middleware needed - user id
-	items, err := s.todoItemsService.GetList(ctx, 0)
+	items, err := s.todoItemsService.GetList(ctx, req.GetUserId())
 	if err != nil {
 		return nil, status.Error(codes.Aborted, "Some error")
 	}
@@ -86,8 +84,7 @@ func (s *serverAPI) GetTaskById(
 	ctx context.Context,
 	req *todo_protobuf_v1.TaskByIdRequest,
 ) (*todo_protobuf_v1.GetTaskByIdResponce, error) {
-	//TODO: Hardcoded owner Id; middleware needed - user id
-	item, err := s.todoItemsService.GetById(ctx, req.GetTaskId(), 0)
+	item, err := s.todoItemsService.GetById(ctx, req.GetTaskId(), req.GetUserId())
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "Item not found")
 	}
@@ -103,13 +100,12 @@ func (s *serverAPI) UpdateTaskById(
 	ctx context.Context,
 	req *todo_protobuf_v1.UpdateTaskByIdRequest,
 ) (*todo_protobuf_v1.ChangedTaskByIdResponce, error) {
-	//TODO: Hardcoded owner Id; middleware needed - user id
 	//TODO: Nullable fields unimplemented
 	err := s.todoItemsService.Update(ctx, models.ToDoItem{
 		Id:         req.GetTaskId(),
 		Title:      req.GetTitle().GetData(),
 		IsComplete: req.GetIsDone().GetData(),
-	}, 0)
+	}, req.GetUserId())
 
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "Item not found")
@@ -125,8 +121,7 @@ func (s *serverAPI) DeleteTaskById(
 	ctx context.Context,
 	req *todo_protobuf_v1.TaskByIdRequest,
 ) (*todo_protobuf_v1.ChangedTaskByIdResponce, error) {
-	//TODO: Hardcoded owner Id; middleware needed - user id
-	err := s.todoItemsService.DeleteById(ctx, req.GetTaskId(), 0)
+	err := s.todoItemsService.DeleteById(ctx, req.GetTaskId(), req.GetUserId())
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "Item not found")
 	}

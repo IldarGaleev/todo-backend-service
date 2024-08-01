@@ -36,6 +36,7 @@ message LogoutResponce{
 
 message CreateTaskRequest{
     string title = 1;
+    uint64 user_id = 2;
 }
 
 message CreateTaskResponce{
@@ -52,6 +53,7 @@ message ListTasksResponce{
 
 message TaskByIdRequest{
     uint64 task_id = 1;
+    uint64 user_id = 2;
 }
 
 message GetTaskByIdResponce{
@@ -62,8 +64,9 @@ message GetTaskByIdResponce{
 
 message UpdateTaskByIdRequest{
     uint64 task_id = 1;
-    NullableString title = 2;
-    NullableBool is_done = 3;
+    uint64 user_id = 2;
+    NullableString title = 3;
+    NullableBool is_done = 4;
 }
 
 message ChangedTaskByIdResponce{
