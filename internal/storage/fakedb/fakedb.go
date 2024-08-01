@@ -19,10 +19,11 @@ type FakeDatabaseProvider struct {
 // Create implements todo.IToDoItemProvider.
 func (d *FakeDatabaseProvider) Create(ctx context.Context, title string, ownerId uint64) (uint64, error) {
 	d.db_index++
+	isDone := false
 	d.db[d.db_index] = models.ToDoItem{
 		Id:         d.db_index,
-		Title:      title,
-		IsComplete: false,
+		Title:      &title,
+		IsComplete: &isDone,
 		OwnerId:    ownerId,
 	}
 
@@ -67,11 +68,13 @@ func (d *FakeDatabaseProvider) Update(ctx context.Context, item models.ToDoItem,
 			return storage.ErrAccessDenied
 		}
 
-		if item.Title != "" {
+		if item.Title != nil {
 			dbItem.Title = item.Title
 		}
 
-		dbItem.IsComplete = item.IsComplete
+		if item.IsComplete != nil {
+			dbItem.IsComplete = item.IsComplete
+		}
 
 		d.db[item.Id] = dbItem
 
