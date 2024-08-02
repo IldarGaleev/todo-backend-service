@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/IldarGaleev/todo-backend-service/internal/domain/models"
+	storageDTO "github.com/IldarGaleev/todo-backend-service/internal/storage/models"
 )
 
 var (
@@ -14,9 +14,9 @@ var (
 
 // TODO: refactoring is needed - move from here
 type IToDoItemProvider interface {
-	Create(ctx context.Context, title string, ownerId uint64) (uint64, error)
-	DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error
-	Update(ctx context.Context, item models.ToDoItem, ownerId uint64) error
-	GetById(ctx context.Context, itemId uint64, ownerId uint64) (*models.ToDoItem, error)
-	GetList(ctx context.Context, ownerId uint64) ([]models.ToDoItem, error)
+	StorageToDoItem_Create(ctx context.Context, title string, ownerId uint64) (uint64, error)
+	StorageToDoItem_DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error
+	StorageToDoItem_Update(ctx context.Context, item storageDTO.ToDoItem, ownerId uint64) error
+	StorageToDoItem_GetById(ctx context.Context, itemId uint64, ownerId uint64) (*storageDTO.ToDoItem, error)
+	StorageToDoItem_GetList(ctx context.Context, ownerId uint64) ([]storageDTO.ToDoItem, error)
 }
