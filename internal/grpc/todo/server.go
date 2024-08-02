@@ -4,7 +4,7 @@ package grpcToDoServer
 import (
 	"context"
 
-	"github.com/IldarGaleev/todo-backend-service/internal/domain/models"
+	serviceDTO "github.com/IldarGaleev/todo-backend-service/internal/services/models"
 	todo_protobuf_v1 "github.com/IldarGaleev/todo-backend-service/pkg/grpc/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -13,10 +13,10 @@ import (
 
 type IToDoItemService interface {
 	Create(ctx context.Context, title string, ownerId uint64) (uint64, error)
-	GetById(ctx context.Context, itemId uint64, ownerId uint64) (*models.ToDoItem, error)
-	GetList(ctx context.Context, ownerId uint64) ([]models.ToDoItem, error)
+	GetById(ctx context.Context, itemId uint64, ownerId uint64) (*serviceDTO.ToDoItem, error)
+	GetList(ctx context.Context, ownerId uint64) ([]serviceDTO.ToDoItem, error)
 	DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error
-	Update(ctx context.Context, item models.ToDoItem, ownerId uint64) error
+	Update(ctx context.Context, item serviceDTO.ToDoItem, ownerId uint64) error
 }
 
 type serverAPI struct {
@@ -101,7 +101,7 @@ func (s *serverAPI) UpdateTaskById(
 	req *todo_protobuf_v1.UpdateTaskByIdRequest,
 ) (*todo_protobuf_v1.ChangedTaskByIdResponce, error) {
 
-	err := s.todoItemsService.Update(ctx, models.ToDoItem{
+	err := s.todoItemsService.Update(ctx, serviceDTO.ToDoItem{
 		Id:         req.GetTaskId(),
 		Title:      req.Title,
 		IsComplete: req.IsDone,

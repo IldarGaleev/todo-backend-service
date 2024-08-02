@@ -1,4 +1,4 @@
-package models
+package serviceDTO
 
 type User struct {
 	userId       uint64
