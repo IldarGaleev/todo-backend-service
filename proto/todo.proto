@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package todo_service;
 
-import "google/protobuf/struct.proto";
-
 option go_package = "github.com/IldarGaleev/todo-backend-service;todo_protobuf_v1";
 
 service ToDoService {
@@ -36,6 +34,7 @@ message LogoutResponce{
 
 message CreateTaskRequest{
     string title = 1;
+    uint64 user_id = 2;
 }
 
 message CreateTaskResponce{
@@ -52,6 +51,7 @@ message ListTasksResponce{
 
 message TaskByIdRequest{
     uint64 task_id = 1;
+    uint64 user_id = 2;
 }
 
 message GetTaskByIdResponce{
@@ -62,26 +62,12 @@ message GetTaskByIdResponce{
 
 message UpdateTaskByIdRequest{
     uint64 task_id = 1;
-    NullableString title = 2;
-    NullableBool is_done = 3;
+    uint64 user_id = 2;
+    optional string title = 3;
+    optional bool is_done = 4;
 }
 
 message ChangedTaskByIdResponce{
     uint64 task_id = 1;
     bool is_success = 2;
-}
-
-
-message NullableString {
-    oneof kind {
-      google.protobuf.NullValue null = 1;
-      string data = 2;
-    }
-}
-
-message NullableBool {
-    oneof kind {
-      google.protobuf.NullValue null = 1;
-      bool data = 2;
-    }
 }

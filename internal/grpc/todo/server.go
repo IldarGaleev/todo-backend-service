@@ -4,7 +4,7 @@ package grpcToDoServer
 import (
 	"context"
 
-	"github.com/IldarGaleev/todo-backend-service/internal/domain/models"
+	serviceDTO "github.com/IldarGaleev/todo-backend-service/internal/services/models"
 	todo_protobuf_v1 "github.com/IldarGaleev/todo-backend-service/pkg/grpc/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -13,10 +13,10 @@ import (
 
 type IToDoItemService interface {
 	Create(ctx context.Context, title string, ownerId uint64) (uint64, error)
-	GetById(ctx context.Context, itemId uint64, ownerId uint64) (*models.ToDoItem, error)
-	GetList(ctx context.Context, ownerId uint64) ([]models.ToDoItem, error)
+	GetById(ctx context.Context, itemId uint64, ownerId uint64) (*serviceDTO.ToDoItem, error)
+	GetList(ctx context.Context, ownerId uint64) ([]serviceDTO.ToDoItem, error)
 	DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error
-	Update(ctx context.Context, item models.ToDoItem, ownerId uint64) error
+	Update(ctx context.Context, item serviceDTO.ToDoItem, ownerId uint64) error
 }
 
 type serverAPI struct {
@@ -46,11 +46,10 @@ func (s *serverAPI) CreateTask(
 	ctx context.Context,
 	req *todo_protobuf_v1.CreateTaskRequest,
 ) (*todo_protobuf_v1.CreateTaskResponce, error) {
-	//TODO: Hardcoded owner Id; middleware needed - user id
-	id, err := s.todoItemsService.Create(ctx, req.GetTitle(), 0)
+	id, err := s.todoItemsService.Create(ctx, req.GetTitle(), req.GetUserId())
 
 	if err != nil {
-		return nil, status.Error(codes.Aborted, "Create error")
+		return nil, status.Error(codes.Internal, "Internal create error")
 	}
 
 	return &todo_protobuf_v1.CreateTaskResponce{
@@ -63,18 +62,17 @@ func (s *serverAPI) ListTasks(
 	ctx context.Context,
 	req *todo_protobuf_v1.ListTasksRequest,
 ) (*todo_protobuf_v1.ListTasksResponce, error) {
-	//TODO: Hardcoded owner Id; middleware needed - user id
-	items, err := s.todoItemsService.GetList(ctx, 0)
+	items, err := s.todoItemsService.GetList(ctx, req.GetUserId())
 	if err != nil {
-		return nil, status.Error(codes.Aborted, "Some error")
+		return nil, status.Error(codes.Internal, "Internal error")
 	}
 
 	responseItems := make([]*todo_protobuf_v1.GetTaskByIdResponce, 0, len(items))
 	for _, item := range items {
 		responseItems = append(responseItems, &todo_protobuf_v1.GetTaskByIdResponce{
 			TaskId: item.Id,
-			Title:  item.Title,
-			IsDone: item.IsComplete,
+			Title:  *item.Title,
+			IsDone: *item.IsComplete,
 		})
 	}
 	return &todo_protobuf_v1.ListTasksResponce{
@@ -86,16 +84,15 @@ func (s *serverAPI) GetTaskById(
 	ctx context.Context,
 	req *todo_protobuf_v1.TaskByIdRequest,
 ) (*todo_protobuf_v1.GetTaskByIdResponce, error) {
-	//TODO: Hardcoded owner Id; middleware needed - user id
-	item, err := s.todoItemsService.GetById(ctx, req.GetTaskId(), 0)
+	item, err := s.todoItemsService.GetById(ctx, req.GetTaskId(), req.GetUserId())
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "Item not found")
 	}
 
 	return &todo_protobuf_v1.GetTaskByIdResponce{
 		TaskId: req.TaskId,
-		Title:  item.Title,
-		IsDone: item.IsComplete,
+		Title:  *item.Title,
+		IsDone: *item.IsComplete,
 	}, nil
 }
 
@@ -103,13 +100,12 @@ func (s *serverAPI) UpdateTaskById(
 	ctx context.Context,
 	req *todo_protobuf_v1.UpdateTaskByIdRequest,
 ) (*todo_protobuf_v1.ChangedTaskByIdResponce, error) {
-	//TODO: Hardcoded owner Id; middleware needed - user id
-	//TODO: Nullable fields unimplemented
-	err := s.todoItemsService.Update(ctx, models.ToDoItem{
+
+	err := s.todoItemsService.Update(ctx, serviceDTO.ToDoItem{
 		Id:         req.GetTaskId(),
-		Title:      req.GetTitle().GetData(),
-		IsComplete: req.GetIsDone().GetData(),
-	}, 0)
+		Title:      req.Title,
+		IsComplete: req.IsDone,
+	}, req.GetUserId())
 
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "Item not found")
@@ -125,8 +121,7 @@ func (s *serverAPI) DeleteTaskById(
 	ctx context.Context,
 	req *todo_protobuf_v1.TaskByIdRequest,
 ) (*todo_protobuf_v1.ChangedTaskByIdResponce, error) {
-	//TODO: Hardcoded owner Id; middleware needed - user id
-	err := s.todoItemsService.DeleteById(ctx, req.GetTaskId(), 0)
+	err := s.todoItemsService.DeleteById(ctx, req.GetTaskId(), req.GetUserId())
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "Item not found")
 	}
