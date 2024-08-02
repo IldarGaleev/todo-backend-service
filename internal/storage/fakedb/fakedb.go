@@ -4,23 +4,23 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/IldarGaleev/todo-backend-service/internal/domain/models"
 	"github.com/IldarGaleev/todo-backend-service/internal/storage"
+	storageDTO "github.com/IldarGaleev/todo-backend-service/internal/storage/models"
 )
 
 var _ storage.IToDoItemProvider = (*FakeDatabaseProvider)(nil)
 
 type FakeDatabaseProvider struct {
 	log      *slog.Logger
-	db       map[uint64]models.ToDoItem
+	db       map[uint64]storageDTO.ToDoItem
 	db_index uint64
 }
 
 // Create implements todo.IToDoItemProvider.
-func (d *FakeDatabaseProvider) Create(ctx context.Context, title string, ownerId uint64) (uint64, error) {
+func (d *FakeDatabaseProvider) StorageToDoItem_Create(ctx context.Context, title string, ownerId uint64) (uint64, error) {
 	d.db_index++
 	isDone := false
-	d.db[d.db_index] = models.ToDoItem{
+	d.db[d.db_index] = storageDTO.ToDoItem{
 		Id:         d.db_index,
 		Title:      &title,
 		IsComplete: &isDone,
@@ -31,7 +31,7 @@ func (d *FakeDatabaseProvider) Create(ctx context.Context, title string, ownerId
 }
 
 // DeleteById implements todo.IToDoItemProvider.
-func (d *FakeDatabaseProvider) DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error {
+func (d *FakeDatabaseProvider) StorageToDoItem_DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error {
 	if _, ok := d.db[itemId]; ok {
 		delete(d.db, itemId)
 		return nil
@@ -40,7 +40,7 @@ func (d *FakeDatabaseProvider) DeleteById(ctx context.Context, itemId uint64, ow
 }
 
 // GetById implements todo.IToDoItemProvider.
-func (d *FakeDatabaseProvider) GetById(ctx context.Context, itemId uint64, ownerId uint64) (*models.ToDoItem, error) {
+func (d *FakeDatabaseProvider) StorageToDoItem_GetById(ctx context.Context, itemId uint64, ownerId uint64) (*storageDTO.ToDoItem, error) {
 	if item, ok := d.db[itemId]; ok {
 		if item.OwnerId != ownerId {
 			return nil, storage.ErrAccessDenied
@@ -51,8 +51,8 @@ func (d *FakeDatabaseProvider) GetById(ctx context.Context, itemId uint64, owner
 }
 
 // GetList implements todo.IToDoItemProvider.
-func (d *FakeDatabaseProvider) GetList(ctx context.Context, ownerId uint64) ([]models.ToDoItem, error) {
-	result := make([]models.ToDoItem, 0)
+func (d *FakeDatabaseProvider) StorageToDoItem_GetList(ctx context.Context, ownerId uint64) ([]storageDTO.ToDoItem, error) {
+	result := make([]storageDTO.ToDoItem, 0)
 	for _, item := range d.db {
 		if item.OwnerId == ownerId {
 			result = append(result, item)
@@ -62,7 +62,7 @@ func (d *FakeDatabaseProvider) GetList(ctx context.Context, ownerId uint64) ([]m
 }
 
 // Update implements todo.IToDoItemProvider.
-func (d *FakeDatabaseProvider) Update(ctx context.Context, item models.ToDoItem, ownerId uint64) error {
+func (d *FakeDatabaseProvider) StorageToDoItem_Update(ctx context.Context, item storageDTO.ToDoItem, ownerId uint64) error {
 	if dbItem, ok := d.db[item.Id]; ok {
 		if dbItem.OwnerId != ownerId {
 			return storage.ErrAccessDenied
@@ -87,7 +87,7 @@ func (d *FakeDatabaseProvider) Update(ctx context.Context, item models.ToDoItem,
 func New(log *slog.Logger) *FakeDatabaseProvider {
 	return &FakeDatabaseProvider{
 		log: log,
-		db:  make(map[uint64]models.ToDoItem),
+		db:  make(map[uint64]storageDTO.ToDoItem),
 	}
 }
 
