@@ -13,11 +13,15 @@ import (
 	"github.com/IldarGaleev/todo-backend-service/internal/storage/fakedb"
 )
 
+type IStorageProvider interface {
+	MustRun()
+	Stop() error
+}
+
 // Main application
 type App struct {
-	grpcServer *grpcApp.App
-	// todoItemsService *todoService.TodoService
-	storageProvider *fakedb.FakeDatabaseProvider
+	grpcServer       *grpcApp.App
+	todoItemsStorage IStorageProvider
 }
 
 // Create main application instance
@@ -34,16 +38,16 @@ func New(
 			config.Port,
 			todoService.New(log, storageProvider),
 		),
-		storageProvider: storageProvider,
+		todoItemsStorage: storageProvider,
 	}
 }
 
 func (app *App) MustRun() {
 	app.grpcServer.MustRun()
-	app.storageProvider.MustRun()
+	app.todoItemsStorage.MustRun()
 }
 
 func (app *App) Stop() {
 	app.grpcServer.Stop()
-	app.storageProvider.Stop()
+	app.todoItemsStorage.Stop()
 }
