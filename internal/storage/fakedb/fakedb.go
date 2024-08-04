@@ -110,3 +110,10 @@ func (d *FakeDatabaseProvider) Stop() error {
 	d.log.Debug("Stop fake DB")
 	return nil
 }
+
+func (d *FakeDatabaseProvider) GetCredential(username string) (*storageDTO.Credential, error) {
+	return &storageDTO.Credential{
+		Username:  "user",
+		TokenHash: nil,
+	}, nil
+}
