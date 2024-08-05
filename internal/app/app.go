@@ -11,7 +11,7 @@ import (
 	grpcApp "github.com/IldarGaleev/todo-backend-service/internal/app/grpc"
 	credentialService "github.com/IldarGaleev/todo-backend-service/internal/services/credential"
 	todoService "github.com/IldarGaleev/todo-backend-service/internal/services/todo"
-	"github.com/IldarGaleev/todo-backend-service/internal/storage/fakedb"
+	"github.com/IldarGaleev/todo-backend-service/internal/storage/postgresdb"
 )
 
 type IStorageProvider interface {
@@ -31,7 +31,7 @@ func New(
 	config *configApp.AppConfig,
 ) *App {
 
-	storageProvider := fakedb.New(log)
+	storageProvider := postgresdb.New(log, config.Dsn)
 
 	return &App{
 		grpcServer: grpcApp.New(
@@ -51,8 +51,8 @@ func New(
 }
 
 func (app *App) MustRun() {
-	app.grpcServer.MustRun()
 	app.todoItemsStorage.MustRun()
+	app.grpcServer.MustRun()
 }
 
 func (app *App) Stop() {
