@@ -8,8 +8,6 @@ import (
 	storageDTO "github.com/IldarGaleev/todo-backend-service/internal/storage/models"
 )
 
-var _ storage.IToDoItemProvider = (*FakeDatabaseProvider)(nil)
-
 type FakeDatabaseProvider struct {
 	log      *slog.Logger
 	db       map[uint64]storageDTO.ToDoItem

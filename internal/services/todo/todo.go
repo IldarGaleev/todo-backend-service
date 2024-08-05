@@ -5,24 +5,49 @@ import (
 	"log/slog"
 
 	serviceDTO "github.com/IldarGaleev/todo-backend-service/internal/services/models"
-	"github.com/IldarGaleev/todo-backend-service/internal/storage"
 	storageDTO "github.com/IldarGaleev/todo-backend-service/internal/storage/models"
 )
 
-type TodoService struct {
-	logger           *slog.Logger
-	todoItemsStorage storage.IToDoItemProvider
+type IToDoItemCreator interface {
+	StorageToDoItem_Create(ctx context.Context, title string, ownerId uint64) (uint64, error)
+}
+type IToDoItemUpdater interface {
+	StorageToDoItem_Update(ctx context.Context, item storageDTO.ToDoItem, ownerId uint64) error
+}
+type IToDoItemGetter interface {
+	StorageToDoItem_GetById(ctx context.Context, itemId uint64, ownerId uint64) (*storageDTO.ToDoItem, error)
+	StorageToDoItem_GetList(ctx context.Context, ownerId uint64) ([]storageDTO.ToDoItem, error)
+}
+type IToDoItemDeleter interface {
+	StorageToDoItem_DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error
 }
 
-func New(log *slog.Logger, todoItemsStorageProvider storage.IToDoItemProvider) *TodoService {
+type TodoService struct {
+	logger           *slog.Logger
+	todoItemsCreator IToDoItemCreator
+	todoItemsUpdater IToDoItemUpdater
+	todoItemsGetter  IToDoItemGetter
+	todoItemsDeleter IToDoItemDeleter
+}
+
+func New(
+	log *slog.Logger,
+	todoItemsCreator IToDoItemCreator,
+	todoItemsUpdater IToDoItemUpdater,
+	todoItemsGetter IToDoItemGetter,
+	todoItemsDeleter IToDoItemDeleter,
+) *TodoService {
 	return &TodoService{
 		logger:           log,
-		todoItemsStorage: todoItemsStorageProvider,
+		todoItemsCreator: todoItemsCreator,
+		todoItemsUpdater: todoItemsUpdater,
+		todoItemsGetter:  todoItemsGetter,
+		todoItemsDeleter: todoItemsDeleter,
 	}
 }
 
 func (s *TodoService) Create(ctx context.Context, title string, ownerId uint64) (uint64, error) {
-	id, err := s.todoItemsStorage.StorageToDoItem_Create(ctx, title, ownerId)
+	id, err := s.todoItemsCreator.StorageToDoItem_Create(ctx, title, ownerId)
 	if err != nil {
 		//TODO: wrap error
 		return 0, err
@@ -31,7 +56,7 @@ func (s *TodoService) Create(ctx context.Context, title string, ownerId uint64) 
 }
 
 func (s *TodoService) GetById(ctx context.Context, itemId uint64, ownerId uint64) (*serviceDTO.ToDoItem, error) {
-	item, err := s.todoItemsStorage.StorageToDoItem_GetById(ctx, itemId, ownerId)
+	item, err := s.todoItemsGetter.StorageToDoItem_GetById(ctx, itemId, ownerId)
 	if err != nil {
 		//TODO: wrap error
 		return nil, err
@@ -45,7 +70,7 @@ func (s *TodoService) GetById(ctx context.Context, itemId uint64, ownerId uint64
 }
 
 func (s *TodoService) GetList(ctx context.Context, ownerId uint64) ([]serviceDTO.ToDoItem, error) {
-	storageItems, err := s.todoItemsStorage.StorageToDoItem_GetList(ctx, ownerId)
+	storageItems, err := s.todoItemsGetter.StorageToDoItem_GetList(ctx, ownerId)
 	if err != nil {
 		//TODO: wrap error
 		return nil, err
@@ -65,7 +90,7 @@ func (s *TodoService) GetList(ctx context.Context, ownerId uint64) ([]serviceDTO
 }
 
 func (s *TodoService) DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error {
-	err := s.todoItemsStorage.StorageToDoItem_DeleteById(ctx, itemId, ownerId)
+	err := s.todoItemsDeleter.StorageToDoItem_DeleteById(ctx, itemId, ownerId)
 	if err != nil {
 		//TODO: wrap error
 		return err
@@ -83,7 +108,7 @@ func (s *TodoService) Update(ctx context.Context, item serviceDTO.ToDoItem, owne
 		IsComplete: item.IsComplete,
 	}
 
-	err := s.todoItemsStorage.StorageToDoItem_Update(ctx, storageItem, ownerId)
+	err := s.todoItemsUpdater.StorageToDoItem_Update(ctx, storageItem, ownerId)
 	if err != nil {
 		//TODO: wrap error
 		return err

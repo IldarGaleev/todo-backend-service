@@ -37,7 +37,13 @@ func New(
 		grpcServer: grpcApp.New(
 			log,
 			config.Port,
-			todoService.New(log, storageProvider),
+			todoService.New(
+				log,
+				storageProvider,
+				storageProvider,
+				storageProvider,
+				storageProvider,
+			),
 			credentialService.New(log, storageProvider),
 		),
 		todoItemsStorage: storageProvider,
