@@ -2,9 +2,11 @@ package todoService
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	serviceDTO "github.com/IldarGaleev/todo-backend-service/internal/services/models"
+	"github.com/IldarGaleev/todo-backend-service/internal/storage"
 	storageDTO "github.com/IldarGaleev/todo-backend-service/internal/storage/models"
 )
 
@@ -30,6 +32,12 @@ type TodoService struct {
 	todoItemsDeleter IToDoItemDeleter
 }
 
+var (
+	ErrAccessDenied = errors.New("todo service: access denied")
+	ErrItemNotFound = errors.New("todo service: item not found")
+	ErrInternal     = errors.New("todo service: internal error")
+)
+
 func New(
 	log *slog.Logger,
 	todoItemsCreator IToDoItemCreator,
@@ -49,8 +57,7 @@ func New(
 func (s *TodoService) Create(ctx context.Context, title string, ownerId uint64) (uint64, error) {
 	id, err := s.todoItemsCreator.StorageToDoItem_Create(ctx, title, ownerId)
 	if err != nil {
-		//TODO: wrap error
-		return 0, err
+		return 0, errors.Join(ErrInternal, err)
 	}
 	return id, nil
 }
@@ -58,9 +65,16 @@ func (s *TodoService) Create(ctx context.Context, title string, ownerId uint64) 
 func (s *TodoService) GetById(ctx context.Context, itemId uint64, ownerId uint64) (*serviceDTO.ToDoItem, error) {
 	item, err := s.todoItemsGetter.StorageToDoItem_GetById(ctx, itemId, ownerId)
 	if err != nil {
-		//TODO: wrap error
-		return nil, err
+		if errors.Is(err, storage.ErrNotFound) {
+			return nil, ErrItemNotFound
+		}
+		return nil, errors.Join(ErrInternal, err)
 	}
+
+	if item.OwnerId != ownerId {
+		return nil, ErrAccessDenied
+	}
+
 	return &serviceDTO.ToDoItem{
 		Id:         itemId,
 		OwnerId:    item.OwnerId,
@@ -72,8 +86,7 @@ func (s *TodoService) GetById(ctx context.Context, itemId uint64, ownerId uint64
 func (s *TodoService) GetList(ctx context.Context, ownerId uint64) ([]serviceDTO.ToDoItem, error) {
 	storageItems, err := s.todoItemsGetter.StorageToDoItem_GetList(ctx, ownerId)
 	if err != nil {
-		//TODO: wrap error
-		return nil, err
+		return nil, errors.Join(ErrInternal, err)
 	}
 	result := make([]serviceDTO.ToDoItem, 0, len(storageItems))
 
@@ -92,8 +105,10 @@ func (s *TodoService) GetList(ctx context.Context, ownerId uint64) ([]serviceDTO
 func (s *TodoService) DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error {
 	err := s.todoItemsDeleter.StorageToDoItem_DeleteById(ctx, itemId, ownerId)
 	if err != nil {
-		//TODO: wrap error
-		return err
+		if errors.Is(err, storage.ErrNotFound) {
+			return ErrItemNotFound
+		}
+		return errors.Join(ErrInternal, err)
 	}
 
 	return nil
@@ -110,8 +125,10 @@ func (s *TodoService) Update(ctx context.Context, item serviceDTO.ToDoItem, owne
 
 	err := s.todoItemsUpdater.StorageToDoItem_Update(ctx, storageItem, ownerId)
 	if err != nil {
-		//TODO: wrap error
-		return err
+		if errors.Is(err, storage.ErrNotFound) {
+			return ErrItemNotFound
+		}
+		return errors.Join(ErrInternal, err)
 	}
 
 	return nil

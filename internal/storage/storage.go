@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	ErrNotFound      = errors.New("not found")
-	ErrAccessDenied  = errors.New("access denied")
-	ErrDatabaseError = errors.New("database error")
+	ErrNotFound      = errors.New("storage: not found")
+	ErrAccessDenied  = errors.New("storage: access denied")
+	ErrDatabaseError = errors.New("storage: database error")
 )

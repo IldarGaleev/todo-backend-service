@@ -5,6 +5,7 @@ package grpcApp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -26,6 +27,11 @@ type App struct {
 	gRPCServer *grpc.Server
 	port       int
 }
+
+var (
+	ErrGrpcServe  = errors.New("grpc app: serve error")
+	ErrGrpcListen = errors.New("grpc app: listen error")
+)
 
 func GetUnaryInterceptor(credentialService ICredentialService) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
@@ -83,7 +89,7 @@ func (a *App) Run() error {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
 
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return errors.Join(ErrGrpcListen, err)
 	}
 
 	logger.Info(
@@ -93,7 +99,7 @@ func (a *App) Run() error {
 	)
 
 	if err := a.gRPCServer.Serve(listener); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return errors.Join(ErrGrpcServe, err)
 	}
 
 	return nil

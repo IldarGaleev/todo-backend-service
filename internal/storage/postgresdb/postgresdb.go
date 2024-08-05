@@ -3,7 +3,6 @@ package postgresdb
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 
 	"github.com/IldarGaleev/todo-backend-service/internal/storage"
@@ -39,7 +38,7 @@ func (d *PostgresDataProvider) MustRun() {
 func (d *PostgresDataProvider) Run() error {
 	db, err := gorm.Open(postgres.Open(d.dsn), &gorm.Config{})
 	if err != nil {
-		return fmt.Errorf("database connect error")
+		return errors.Join(storage.ErrDatabaseError, err)
 	}
 	d.db = db
 	db.AutoMigrate(
@@ -101,7 +100,7 @@ func (d *PostgresDataProvider) StorageToDoItem_Update(ctx context.Context, item 
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return errors.Join(storage.ErrNotFound, result.Error)
+			return storage.ErrNotFound
 		}
 		errors.Join(storage.ErrDatabaseError, result.Error)
 	}
@@ -116,7 +115,7 @@ func (d *PostgresDataProvider) StorageToDoItem_GetById(ctx context.Context, item
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, errors.Join(storage.ErrNotFound, result.Error)
+			return nil, storage.ErrNotFound
 		}
 		return nil, errors.Join(storage.ErrDatabaseError, result.Error)
 	}
@@ -156,7 +155,7 @@ func (d *PostgresDataProvider) StorageToDoItem_DeleteById(ctx context.Context, i
 	result := d.db.WithContext(ctx).Delete(&postgresStorageORM.ToDoItemPG{}, itemId)
 
 	if result.Error != nil {
-		return errors.Join(storage.ErrNotFound, result.Error)
+		return errors.Join(storage.ErrDatabaseError, result.Error)
 	}
 
 	if result.RowsAffected == 0 {
