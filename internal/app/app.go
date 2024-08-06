@@ -33,17 +33,22 @@ func New(
 
 	storageProvider := postgresdb.New(log, config.Dsn)
 
+	todoService := todoService.New(
+		log,
+		storageProvider,
+		storageProvider,
+		storageProvider,
+		storageProvider,
+	)
+
 	return &App{
 		grpcServer: grpcApp.New(
 			log,
 			config.Port,
-			todoService.New(
-				log,
-				storageProvider,
-				storageProvider,
-				storageProvider,
-				storageProvider,
-			),
+			todoService,
+			todoService,
+			todoService,
+			todoService,
 			credentialService.New(log, storageProvider),
 		),
 		todoItemsStorage: storageProvider,

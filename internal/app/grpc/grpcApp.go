@@ -53,7 +53,15 @@ func GetUnaryInterceptor(credentialService ICredentialService) grpc.UnaryServerI
 }
 
 // Create gRPC application instance
-func New(log *slog.Logger, port int, todoItemService grpcToDoServer.IToDoItemService, credentialSevice ICredentialService) *App {
+func New(
+	log *slog.Logger,
+	port int,
+	todoItemsCreatorService grpcToDoServer.IToDoItemCreatorService,
+	todoItemsUpdaterService grpcToDoServer.IToDoItemUpdaterService,
+	todoItemsGetterService grpcToDoServer.IToDoItemGetterService,
+	todoItemsDeleterService grpcToDoServer.IToDoItemDeleterService,
+	credentialSevice ICredentialService,
+) *App {
 
 	var opts []grpc.ServerOption
 
@@ -63,7 +71,13 @@ func New(log *slog.Logger, port int, todoItemService grpcToDoServer.IToDoItemSer
 	log.Warn("insecure transport for gRPC")
 	gRPCServer := grpc.NewServer(opts...)
 
-	grpcToDoServer.Register(gRPCServer, todoItemService)
+	grpcToDoServer.Register(
+		gRPCServer,
+		todoItemsCreatorService,
+		todoItemsUpdaterService,
+		todoItemsGetterService,
+		todoItemsDeleterService,
+	)
 
 	return &App{
 		log:        log,
