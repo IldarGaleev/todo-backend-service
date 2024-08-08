@@ -9,6 +9,8 @@ import (
 
 	configApp "github.com/IldarGaleev/todo-backend-service/internal/app/config"
 	grpcApp "github.com/IldarGaleev/todo-backend-service/internal/app/grpc"
+	secretsJwt "github.com/IldarGaleev/todo-backend-service/internal/lib/secrets"
+	authService "github.com/IldarGaleev/todo-backend-service/internal/services/auth"
 	credentialService "github.com/IldarGaleev/todo-backend-service/internal/services/credential"
 	todoService "github.com/IldarGaleev/todo-backend-service/internal/services/todo"
 	"github.com/IldarGaleev/todo-backend-service/internal/storage/postgresdb"
@@ -21,8 +23,8 @@ type IStorageProvider interface {
 
 // Main application
 type App struct {
-	grpcServer       *grpcApp.App
-	todoItemsStorage IStorageProvider
+	grpcServer      *grpcApp.App
+	storageProvider IStorageProvider
 }
 
 // Create main application instance
@@ -33,11 +35,19 @@ func New(
 
 	storageProvider := postgresdb.New(log, config.Dsn)
 
+	secretProvider := secretsJwt.New(log,*config)
+
 	todoService := todoService.New(
 		log,
 		storageProvider,
 		storageProvider,
 		storageProvider,
+		storageProvider,
+	)
+
+	authService := authService.New(
+		log,
+		secretProvider,
 		storageProvider,
 	)
 
@@ -49,18 +59,19 @@ func New(
 			todoService,
 			todoService,
 			todoService,
+			authService,
 			credentialService.New(log, storageProvider),
 		),
-		todoItemsStorage: storageProvider,
+		storageProvider: storageProvider,
 	}
 }
 
 func (app *App) MustRun() {
-	app.todoItemsStorage.MustRun()
+	app.storageProvider.MustRun()
 	app.grpcServer.MustRun()
 }
 
 func (app *App) Stop() {
 	app.grpcServer.Stop()
-	app.todoItemsStorage.Stop()
+	app.storageProvider.Stop()
 }

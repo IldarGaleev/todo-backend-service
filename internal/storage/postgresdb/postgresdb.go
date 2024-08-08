@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 
+	serviceDTO "github.com/IldarGaleev/todo-backend-service/internal/services/models"
 	"github.com/IldarGaleev/todo-backend-service/internal/storage"
 	storageDTO "github.com/IldarGaleev/todo-backend-service/internal/storage/models"
 	postgresStorageORM "github.com/IldarGaleev/todo-backend-service/internal/storage/postgresdb/models"
@@ -172,4 +173,55 @@ func (d *PostgresDataProvider) GetCredential(username string) (*storageDTO.Crede
 		Username:  "user",
 		TokenHash: nil,
 	}, nil
+}
+
+// var _ authService.IAccountCreator = (*PostgresDataProvider)(nil)
+// var _ authService.IAccountGetter = (*PostgresDataProvider)(nil)
+
+// GetAccountById implements authService.IAccountGetter.
+func (d *PostgresDataProvider) GetAccountById(ctx context.Context, userId uint64) (*storageDTO.User, error) {
+	var user storageDTO.User
+	result := d.db.WithContext(ctx).First(&user, userId)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, storage.ErrNotFound
+		}
+		return nil, errors.Join(storage.ErrDatabaseError, result.Error)
+	}
+
+	return &user, nil
+}
+
+// GetAccountByUsername implements authService.IAccountGetter.
+func (d *PostgresDataProvider) GetAccountByUsername(ctx context.Context, username string) (*storageDTO.User, error) {
+	var user storageDTO.User
+	result := d.db.WithContext(ctx).First(&user, "username=?", username)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, storage.ErrNotFound
+		}
+		return nil, errors.Join(storage.ErrDatabaseError, result.Error)
+	}
+
+	return &user, nil
+}
+
+// CreateAccount implements authService.IAccountCreator.
+func (d *PostgresDataProvider) CreateAccount(ctx context.Context, username string, passwordHash []byte) (*serviceDTO.User, error) {
+	newUser := postgresStorageORM.UserPG{
+		Username:     username,
+		PasswordHash: passwordHash,
+	}
+
+	result := d.db.WithContext(ctx).Create(&newUser)
+	if result.Error != nil {
+		return nil, errors.Join(storage.ErrDatabaseError, result.Error)
+	}
+
+	return &serviceDTO.User{
+		UserId: &newUser.Id, 
+		Username: &newUser.Username,
+		}, nil
 }

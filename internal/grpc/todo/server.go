@@ -28,12 +28,17 @@ type IToDoItemUpdaterService interface {
 	Update(ctx context.Context, item serviceDTO.ToDoItem, ownerId uint64) error
 }
 
+type IAccountSecretCreator interface {
+	CreateUserSecret(ctx context.Context, user serviceDTO.User) (string, error)
+}
+
 type serverAPI struct {
 	todo_protobuf_v1.UnimplementedToDoServiceServer
 	todoItemsCreatorService IToDoItemCreatorService
 	todoItemsUpdaterService IToDoItemUpdaterService
 	todoItemsGetterService  IToDoItemGetterService
 	todoItemsDeleterService IToDoItemDeleterService
+	accountSecretCreator    IAccountSecretCreator
 }
 
 func Register(
@@ -42,6 +47,7 @@ func Register(
 	todoItemsUpdaterService IToDoItemUpdaterService,
 	todoItemsGetterService IToDoItemGetterService,
 	todoItemsDeleterService IToDoItemDeleterService,
+	accountSecretCreator IAccountSecretCreator,
 ) {
 	todo_protobuf_v1.RegisterToDoServiceServer(
 		gRPC,
@@ -50,6 +56,7 @@ func Register(
 			todoItemsUpdaterService: todoItemsUpdaterService,
 			todoItemsGetterService:  todoItemsGetterService,
 			todoItemsDeleterService: todoItemsDeleterService,
+			accountSecretCreator:    accountSecretCreator,
 		},
 	)
 }
@@ -58,7 +65,22 @@ func (s *serverAPI) Login(
 	ctx context.Context,
 	req *todo_protobuf_v1.LoginRequest,
 ) (*todo_protobuf_v1.LoginResponce, error) {
-	panic("login not implement")
+
+	token, err:=s.accountSecretCreator.CreateUserSecret(
+			ctx,
+			serviceDTO.User{
+				Username: &req.Email,
+				Password: req.Password,
+			},
+		)
+	
+		if err!=nil{
+			return nil, status.Error(codes.PermissionDenied, "wrong username or password")
+		}
+	
+	return &todo_protobuf_v1.LoginResponce{
+		Token: token,
+	}, nil
 }
 
 func (s *serverAPI) Logout(

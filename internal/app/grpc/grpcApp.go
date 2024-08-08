@@ -60,6 +60,7 @@ func New(
 	todoItemsUpdaterService grpcToDoServer.IToDoItemUpdaterService,
 	todoItemsGetterService grpcToDoServer.IToDoItemGetterService,
 	todoItemsDeleterService grpcToDoServer.IToDoItemDeleterService,
+	accountSecretCreator  grpcToDoServer.IAccountSecretCreator,
 	credentialSevice ICredentialService,
 ) *App {
 
@@ -77,6 +78,7 @@ func New(
 		todoItemsUpdaterService,
 		todoItemsGetterService,
 		todoItemsDeleterService,
+		accountSecretCreator,
 	)
 
 	return &App{
