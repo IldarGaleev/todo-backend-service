@@ -1,7 +1,7 @@
 package postgresStorageORM
 
 type ToDoItemPG struct {
-	Id         uint64 `gorm:"primaryKey;autoincrement;index:idx_user"`
+	Id         uint64 `gorm:"primaryKey;autoincrement;index:idx_todo_item"`
 	OwnerId    uint64 `gorm:"index:idx_owner"`
 	Owner      UserPG `gorm:"constraint:OnDelete:CASCADE"`
 	Title      string `gorm:"size:255;not null"`
