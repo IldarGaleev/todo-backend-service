@@ -82,7 +82,7 @@ func New(
 	)
 
 	return &App{
-		log:        log,
+		log:        log.With(slog.String("module","grpcApp")),
 		gRPCServer: gRPCServer,
 		port:       port,
 	}
@@ -97,10 +97,7 @@ func (a *App) MustRun() {
 
 // Run gRPC server listener
 func (a *App) Run() error {
-	const op = "grpcApp.Run"
-	logger := a.log.With(
-		slog.String("op", op),
-	)
+	log:=a.log.With(slog.String("method","Run"))
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
 
@@ -108,7 +105,7 @@ func (a *App) Run() error {
 		return errors.Join(ErrGrpcListen, err)
 	}
 
-	logger.Info(
+	log.Info(
 		"gRPC server started",
 		slog.String("addr", listener.Addr().String()),
 		slog.Int("port", a.port),
@@ -123,13 +120,9 @@ func (a *App) Run() error {
 
 // Stop gRPC server listener
 func (a *App) Stop() {
-	const op = "grpcApp.Stop"
+	log:=a.log.With(slog.String("method","Stop"))
 
-	logger := a.log.With(
-		slog.String("op", op),
-	)
-
-	logger.Info("stopping gRPC server")
+	log.Info("stopping gRPC server")
 
 	a.gRPCServer.GracefulStop()
 }

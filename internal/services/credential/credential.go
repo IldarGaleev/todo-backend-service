@@ -17,22 +17,21 @@ type CredentialService struct {
 
 func New(log *slog.Logger, storage ICredentialStorageProvider) *CredentialService {
 	return &CredentialService{
-		logger:  log,
+		logger:  log.With(slog.String("module","credentialService")),
 		storage: storage,
 	}
 }
 
 func (s *CredentialService) CheckToken(token string) bool {
-	const op = "credentialService.CheckToken"
-	logger := s.logger.With(slog.String("op", op))
+	log:=s.logger.With(slog.String("method","CheckToken"))
 
 	_, err := s.storage.GetCredential("123")
 	if err != nil {
-		logger.Error("find credential error")
+		log.Error("find credential error")
 		return false
 	}
 
 	//TODO: unimplement token checker
-	logger.Error("unimplement credential token checker")
+	log.Error("unimplement credential token checker")
 	return token == "Bearer 1234"
 }

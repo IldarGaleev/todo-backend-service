@@ -46,7 +46,7 @@ func New(
 	todoItemsDeleter IToDoItemDeleter,
 ) *TodoService {
 	return &TodoService{
-		logger:           log,
+		logger:           log.With(slog.String("module", "todoService")),
 		todoItemsCreator: todoItemsCreator,
 		todoItemsUpdater: todoItemsUpdater,
 		todoItemsGetter:  todoItemsGetter,

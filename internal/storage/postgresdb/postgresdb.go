@@ -22,7 +22,7 @@ type PostgresDataProvider struct {
 // New create DatabaseApp
 func New(log *slog.Logger, dsn string) *PostgresDataProvider {
 	return &PostgresDataProvider{
-		log: log,
+		log: log.With(slog.String("module","postgresdb")),
 		dsn: dsn,
 	}
 }
@@ -168,7 +168,8 @@ func (d *PostgresDataProvider) StorageToDoItem_DeleteById(ctx context.Context, i
 
 // GetCredential implements credentialService.ICredentialStorageProvider.
 func (d *PostgresDataProvider) GetCredential(username string) (*storageDTO.Credential, error) {
-	d.log.Warn("get credential not implement")
+	log:=d.log.With(slog.String("method","GetCredential"))
+	log.Warn("get credential not implement")
 	return &storageDTO.Credential{
 		Username:  "user",
 		TokenHash: nil,

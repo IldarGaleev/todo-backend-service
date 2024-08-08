@@ -84,7 +84,7 @@ func (d *FakeDatabaseProvider) StorageToDoItem_Update(ctx context.Context, item 
 // New create DatabaseApp
 func New(log *slog.Logger) *FakeDatabaseProvider {
 	return &FakeDatabaseProvider{
-		log: log,
+		log: log.With(slog.String("module","fakedb")),
 		db:  make(map[uint64]storageDTO.ToDoItem),
 	}
 }
@@ -99,13 +99,15 @@ func (d *FakeDatabaseProvider) MustRun() {
 
 // Run create database connection
 func (d *FakeDatabaseProvider) Run() error {
-	d.log.Debug("Start fake DB")
+	log:=d.log.With(slog.String("method","Run"))
+	log.Debug("Start fake DB")
 	return nil
 }
 
 // Stop close database connection
 func (d *FakeDatabaseProvider) Stop() error {
-	d.log.Debug("Stop fake DB")
+	log:=d.log.With(slog.String("method","Stop"))
+	log.Debug("Stop fake DB")
 	return nil
 }
 

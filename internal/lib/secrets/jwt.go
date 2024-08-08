@@ -18,7 +18,7 @@ type SecretJWT struct {
 
 func New(log *slog.Logger, config configApp.AppConfig) (*SecretJWT){
 	return &SecretJWT{
-		logger: log,
+		logger: log.With(slog.String("module","secretsJwt")),
 		maxAge: config.SecretsMaxAge,
 		secretKey: config.SecretKey,
 	}
@@ -26,7 +26,7 @@ func New(log *slog.Logger, config configApp.AppConfig) (*SecretJWT){
 
 func (s *SecretJWT)ValidateSecret(ctx context.Context, secret []byte) (error){
 	// log:=s.logger.With(slog.String("method","ValidateSecret"))
-	return nil
+	panic("not implement ValidateSecret")
 }
 
 func (s *SecretJWT)CreateSecret(ctx context.Context, user secretsDTO.User) ([]byte, error) {
