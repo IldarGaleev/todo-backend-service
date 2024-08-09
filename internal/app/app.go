@@ -14,6 +14,7 @@ import (
 	credentialService "github.com/IldarGaleev/todo-backend-service/internal/services/credential"
 	todoService "github.com/IldarGaleev/todo-backend-service/internal/services/todo"
 	"github.com/IldarGaleev/todo-backend-service/internal/storage/postgresdb"
+	faketempdb "github.com/IldarGaleev/todo-backend-service/internal/tempstorage/fakeTempDb"
 )
 
 type IStorageProvider interface {
@@ -34,8 +35,13 @@ func New(
 ) *App {
 
 	storageProvider := postgresdb.New(log, config.Dsn)
+	tokenStorage := faketempdb.New(log)
 
-	secretProvider := secretsJwt.New(log,*config)
+	secretProvider := secretsJwt.New(
+		log,
+		*config, tokenStorage,
+		tokenStorage,
+	)
 
 	todoService := todoService.New(
 		log,
@@ -59,6 +65,8 @@ func New(
 			todoService,
 			todoService,
 			todoService,
+			authService,
+			authService,
 			authService,
 			credentialService.New(log, storageProvider),
 		),

@@ -32,6 +32,15 @@ type IAccountSecretCreator interface {
 	CreateUserSecret(ctx context.Context, user serviceDTO.User) (string, error)
 }
 
+type IAccountSecretValidator interface {
+	CheckSecret(ctx context.Context, secret []byte) (
+		*serviceDTO.User,
+		error,
+	)
+}
+type IAccountSecretDeleter interface {
+	DeleteSecret(ctx context.Context, secret []byte) error
+}
 type serverAPI struct {
 	todo_protobuf_v1.UnimplementedToDoServiceServer
 	todoItemsCreatorService IToDoItemCreatorService
@@ -39,6 +48,8 @@ type serverAPI struct {
 	todoItemsGetterService  IToDoItemGetterService
 	todoItemsDeleterService IToDoItemDeleterService
 	accountSecretCreator    IAccountSecretCreator
+	accountSecretValidator  IAccountSecretValidator
+	accountSecretDeleter    IAccountSecretDeleter
 }
 
 func Register(
@@ -48,6 +59,8 @@ func Register(
 	todoItemsGetterService IToDoItemGetterService,
 	todoItemsDeleterService IToDoItemDeleterService,
 	accountSecretCreator IAccountSecretCreator,
+	accountSecretValidator IAccountSecretValidator,
+	accountSecretDeleter IAccountSecretDeleter,
 ) {
 	todo_protobuf_v1.RegisterToDoServiceServer(
 		gRPC,
@@ -57,6 +70,8 @@ func Register(
 			todoItemsGetterService:  todoItemsGetterService,
 			todoItemsDeleterService: todoItemsDeleterService,
 			accountSecretCreator:    accountSecretCreator,
+			accountSecretValidator:  accountSecretValidator,
+			accountSecretDeleter:    accountSecretDeleter,
 		},
 	)
 }
@@ -66,18 +81,18 @@ func (s *serverAPI) Login(
 	req *todo_protobuf_v1.LoginRequest,
 ) (*todo_protobuf_v1.LoginResponce, error) {
 
-	token, err:=s.accountSecretCreator.CreateUserSecret(
-			ctx,
-			serviceDTO.User{
-				Username: &req.Email,
-				Password: req.Password,
-			},
-		)
-	
-		if err!=nil{
-			return nil, status.Error(codes.PermissionDenied, "wrong username or password")
-		}
-	
+	token, err := s.accountSecretCreator.CreateUserSecret(
+		ctx,
+		serviceDTO.User{
+			Username: &req.Email,
+			Password: req.Password,
+		},
+	)
+
+	if err != nil {
+		return nil, status.Error(codes.PermissionDenied, "wrong username or password")
+	}
+
 	return &todo_protobuf_v1.LoginResponce{
 		Token: token,
 	}, nil
@@ -87,7 +102,37 @@ func (s *serverAPI) Logout(
 	ctx context.Context,
 	req *todo_protobuf_v1.LogoutRequest,
 ) (*todo_protobuf_v1.LogoutResponce, error) {
-	panic("logout not implement")
+	t := req.GetToken()
+	tt := req.Token
+	_ = tt
+	err := s.accountSecretDeleter.DeleteSecret(ctx, []byte(t))
+	if err != nil {
+		return &todo_protobuf_v1.LogoutResponce{
+			Success: false,
+		}, status.Error(codes.FailedPrecondition, "wrong token or revoked")
+	}
+
+	return &todo_protobuf_v1.LogoutResponce{
+		Success: true,
+	}, nil
+}
+
+func (s *serverAPI) CheckSecret(
+	ctx context.Context,
+	req *todo_protobuf_v1.CheckSecretRequest,
+) (*todo_protobuf_v1.CheckSecretResponce, error) {
+	user, err := s.accountSecretValidator.CheckSecret(
+		ctx,
+		[]byte(req.GetSecret()),
+	)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "check secret failed")
+	}
+
+	return &todo_protobuf_v1.CheckSecretResponce{
+		UserId: *user.UserId,
+		Email:  *user.Username,
+	}, nil
 }
 
 func (s *serverAPI) CreateTask(

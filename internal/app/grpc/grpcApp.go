@@ -60,7 +60,9 @@ func New(
 	todoItemsUpdaterService grpcToDoServer.IToDoItemUpdaterService,
 	todoItemsGetterService grpcToDoServer.IToDoItemGetterService,
 	todoItemsDeleterService grpcToDoServer.IToDoItemDeleterService,
-	accountSecretCreator  grpcToDoServer.IAccountSecretCreator,
+	accountSecretCreator grpcToDoServer.IAccountSecretCreator,
+	accountSecretValidator grpcToDoServer.IAccountSecretValidator,
+	accountSecretDeleter grpcToDoServer.IAccountSecretDeleter,
 	credentialSevice ICredentialService,
 ) *App {
 
@@ -79,10 +81,12 @@ func New(
 		todoItemsGetterService,
 		todoItemsDeleterService,
 		accountSecretCreator,
+		accountSecretValidator,
+		accountSecretDeleter,
 	)
 
 	return &App{
-		log:        log.With(slog.String("module","grpcApp")),
+		log:        log.With(slog.String("module", "grpcApp")),
 		gRPCServer: gRPCServer,
 		port:       port,
 	}
@@ -97,7 +101,7 @@ func (a *App) MustRun() {
 
 // Run gRPC server listener
 func (a *App) Run() error {
-	log:=a.log.With(slog.String("method","Run"))
+	log := a.log.With(slog.String("method", "Run"))
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
 
@@ -120,7 +124,7 @@ func (a *App) Run() error {
 
 // Stop gRPC server listener
 func (a *App) Stop() {
-	log:=a.log.With(slog.String("method","Stop"))
+	log := a.log.With(slog.String("method", "Stop"))
 
 	log.Info("stopping gRPC server")
 
