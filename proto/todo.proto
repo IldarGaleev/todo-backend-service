@@ -7,6 +7,7 @@ option go_package = "github.com/IldarGaleev/todo-backend-service;todo_protobuf_v
 service ToDoService {
     rpc Login (LoginRequest) returns (LoginResponce);
     rpc Logout (LogoutRequest) returns (LogoutResponce);
+    rpc CheckSecret (CheckSecretRequest) returns (CheckSecretResponce);
     
     rpc CreateTask (CreateTaskRequest) returns (CreateTaskResponce);
     rpc ListTasks (ListTasksRequest) returns (ListTasksResponce);
@@ -70,4 +71,13 @@ message UpdateTaskByIdRequest{
 message ChangedTaskByIdResponce{
     uint64 task_id = 1;
     bool is_success = 2;
+}
+
+message CheckSecretRequest{
+    string secret = 1;
+}
+
+message CheckSecretResponce{
+    uint64 userId = 1;
+    string email = 2;
 }
