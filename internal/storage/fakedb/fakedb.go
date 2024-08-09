@@ -8,8 +8,6 @@ import (
 	storageDTO "github.com/IldarGaleev/todo-backend-service/internal/storage/models"
 )
 
-var _ storage.IToDoItemProvider = (*FakeDatabaseProvider)(nil)
-
 type FakeDatabaseProvider struct {
 	log      *slog.Logger
 	db       map[uint64]storageDTO.ToDoItem
@@ -86,7 +84,7 @@ func (d *FakeDatabaseProvider) StorageToDoItem_Update(ctx context.Context, item 
 // New create DatabaseApp
 func New(log *slog.Logger) *FakeDatabaseProvider {
 	return &FakeDatabaseProvider{
-		log: log,
+		log: log.With(slog.String("module","fakedb")),
 		db:  make(map[uint64]storageDTO.ToDoItem),
 	}
 }
@@ -101,12 +99,23 @@ func (d *FakeDatabaseProvider) MustRun() {
 
 // Run create database connection
 func (d *FakeDatabaseProvider) Run() error {
-	d.log.Debug("Start fake DB")
+	log:=d.log.With(slog.String("method","Run"))
+	log.Debug("Start fake DB")
 	return nil
 }
 
 // Stop close database connection
 func (d *FakeDatabaseProvider) Stop() error {
-	d.log.Debug("Stop fake DB")
+	log:=d.log.With(slog.String("method","Stop"))
+	log.Debug("Stop fake DB")
 	return nil
 }
+
+func (d *FakeDatabaseProvider) GetCredential(username string) (*storageDTO.Credential, error) {
+	return &storageDTO.Credential{
+		Username:  "user",
+		TokenHash: nil,
+	}, nil
+}
+
+//TODO: unimplement IAccountCreator, IAccountGetter, AuthService

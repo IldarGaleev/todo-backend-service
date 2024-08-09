@@ -11,42 +11,135 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type IToDoItemService interface {
+type IToDoItemCreatorService interface {
 	Create(ctx context.Context, title string, ownerId uint64) (uint64, error)
+}
+
+type IToDoItemGetterService interface {
 	GetById(ctx context.Context, itemId uint64, ownerId uint64) (*serviceDTO.ToDoItem, error)
 	GetList(ctx context.Context, ownerId uint64) ([]serviceDTO.ToDoItem, error)
+}
+
+type IToDoItemDeleterService interface {
 	DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error
+}
+
+type IToDoItemUpdaterService interface {
 	Update(ctx context.Context, item serviceDTO.ToDoItem, ownerId uint64) error
 }
 
-type serverAPI struct {
-	todo_protobuf_v1.UnimplementedToDoServiceServer
-	todoItemsService IToDoItemService
+type IAccountSecretCreator interface {
+	CreateUserSecret(ctx context.Context, user serviceDTO.User) (string, error)
 }
 
-func Register(gRPC *grpc.Server, todoItemsService IToDoItemService) {
-	todo_protobuf_v1.RegisterToDoServiceServer(gRPC, &serverAPI{todoItemsService: todoItemsService})
+type IAccountSecretValidator interface {
+	CheckSecret(ctx context.Context, secret []byte) (
+		*serviceDTO.User,
+		error,
+	)
+}
+type IAccountSecretDeleter interface {
+	DeleteSecret(ctx context.Context, secret []byte) error
+}
+type serverAPI struct {
+	todo_protobuf_v1.UnimplementedToDoServiceServer
+	todoItemsCreatorService IToDoItemCreatorService
+	todoItemsUpdaterService IToDoItemUpdaterService
+	todoItemsGetterService  IToDoItemGetterService
+	todoItemsDeleterService IToDoItemDeleterService
+	accountSecretCreator    IAccountSecretCreator
+	accountSecretValidator  IAccountSecretValidator
+	accountSecretDeleter    IAccountSecretDeleter
+}
+
+func Register(
+	gRPC *grpc.Server,
+	todoItemsCreatorService IToDoItemCreatorService,
+	todoItemsUpdaterService IToDoItemUpdaterService,
+	todoItemsGetterService IToDoItemGetterService,
+	todoItemsDeleterService IToDoItemDeleterService,
+	accountSecretCreator IAccountSecretCreator,
+	accountSecretValidator IAccountSecretValidator,
+	accountSecretDeleter IAccountSecretDeleter,
+) {
+	todo_protobuf_v1.RegisterToDoServiceServer(
+		gRPC,
+		&serverAPI{
+			todoItemsCreatorService: todoItemsCreatorService,
+			todoItemsUpdaterService: todoItemsUpdaterService,
+			todoItemsGetterService:  todoItemsGetterService,
+			todoItemsDeleterService: todoItemsDeleterService,
+			accountSecretCreator:    accountSecretCreator,
+			accountSecretValidator:  accountSecretValidator,
+			accountSecretDeleter:    accountSecretDeleter,
+		},
+	)
 }
 
 func (s *serverAPI) Login(
 	ctx context.Context,
 	req *todo_protobuf_v1.LoginRequest,
 ) (*todo_protobuf_v1.LoginResponce, error) {
-	panic("login not implement")
+
+	token, err := s.accountSecretCreator.CreateUserSecret(
+		ctx,
+		serviceDTO.User{
+			Username: &req.Email,
+			Password: req.Password,
+		},
+	)
+
+	if err != nil {
+		return nil, status.Error(codes.PermissionDenied, "wrong username or password")
+	}
+
+	return &todo_protobuf_v1.LoginResponce{
+		Token: token,
+	}, nil
 }
 
 func (s *serverAPI) Logout(
 	ctx context.Context,
 	req *todo_protobuf_v1.LogoutRequest,
 ) (*todo_protobuf_v1.LogoutResponce, error) {
-	panic("logout not implement")
+	t := req.GetToken()
+	tt := req.Token
+	_ = tt
+	err := s.accountSecretDeleter.DeleteSecret(ctx, []byte(t))
+	if err != nil {
+		return &todo_protobuf_v1.LogoutResponce{
+			Success: false,
+		}, status.Error(codes.FailedPrecondition, "wrong token or revoked")
+	}
+
+	return &todo_protobuf_v1.LogoutResponce{
+		Success: true,
+	}, nil
+}
+
+func (s *serverAPI) CheckSecret(
+	ctx context.Context,
+	req *todo_protobuf_v1.CheckSecretRequest,
+) (*todo_protobuf_v1.CheckSecretResponce, error) {
+	user, err := s.accountSecretValidator.CheckSecret(
+		ctx,
+		[]byte(req.GetSecret()),
+	)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "check secret failed")
+	}
+
+	return &todo_protobuf_v1.CheckSecretResponce{
+		UserId: *user.UserId,
+		Email:  *user.Username,
+	}, nil
 }
 
 func (s *serverAPI) CreateTask(
 	ctx context.Context,
 	req *todo_protobuf_v1.CreateTaskRequest,
 ) (*todo_protobuf_v1.CreateTaskResponce, error) {
-	id, err := s.todoItemsService.Create(ctx, req.GetTitle(), req.GetUserId())
+	id, err := s.todoItemsCreatorService.Create(ctx, req.GetTitle(), req.GetUserId())
 
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Internal create error")
@@ -62,7 +155,7 @@ func (s *serverAPI) ListTasks(
 	ctx context.Context,
 	req *todo_protobuf_v1.ListTasksRequest,
 ) (*todo_protobuf_v1.ListTasksResponce, error) {
-	items, err := s.todoItemsService.GetList(ctx, req.GetUserId())
+	items, err := s.todoItemsGetterService.GetList(ctx, req.GetUserId())
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Internal error")
 	}
@@ -84,7 +177,7 @@ func (s *serverAPI) GetTaskById(
 	ctx context.Context,
 	req *todo_protobuf_v1.TaskByIdRequest,
 ) (*todo_protobuf_v1.GetTaskByIdResponce, error) {
-	item, err := s.todoItemsService.GetById(ctx, req.GetTaskId(), req.GetUserId())
+	item, err := s.todoItemsGetterService.GetById(ctx, req.GetTaskId(), req.GetUserId())
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "Item not found")
 	}
@@ -101,7 +194,7 @@ func (s *serverAPI) UpdateTaskById(
 	req *todo_protobuf_v1.UpdateTaskByIdRequest,
 ) (*todo_protobuf_v1.ChangedTaskByIdResponce, error) {
 
-	err := s.todoItemsService.Update(ctx, serviceDTO.ToDoItem{
+	err := s.todoItemsUpdaterService.Update(ctx, serviceDTO.ToDoItem{
 		Id:         req.GetTaskId(),
 		Title:      req.Title,
 		IsComplete: req.IsDone,
@@ -121,7 +214,7 @@ func (s *serverAPI) DeleteTaskById(
 	ctx context.Context,
 	req *todo_protobuf_v1.TaskByIdRequest,
 ) (*todo_protobuf_v1.ChangedTaskByIdResponce, error) {
-	err := s.todoItemsService.DeleteById(ctx, req.GetTaskId(), req.GetUserId())
+	err := s.todoItemsDeleterService.DeleteById(ctx, req.GetTaskId(), req.GetUserId())
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "Item not found")
 	}

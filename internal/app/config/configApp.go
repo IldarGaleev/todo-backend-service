@@ -4,13 +4,18 @@ Implements application configuration
 package configApp
 
 import (
+	"time"
+
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type AppConfig struct {
-	EnvMode string `env:"ENV_MODE" env-default:"prod"`
-	Port    int    `env:"PORT" env-default:"9090"`
-	Dsn     string `env:"DSN" env-require:"true"`
+	EnvMode   string `env:"ENV_MODE" env-default:"prod"`
+	Port      int    `env:"PORT" env-default:"9090"`
+	Dsn       string `env:"DSN" env-require:"true"`
+
+	SecretKey []byte `env:"SECRET_KEY" env-require:"true"`
+	SecretsMaxAge time.Duration `env:"SECRETS_MAX_AGE" env-default:"24h"`
 }
 
 // Returns app configuration. Panic if failed

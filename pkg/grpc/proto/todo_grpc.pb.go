@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type ToDoServiceClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponce, error)
 	Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponce, error)
+	CheckSecret(ctx context.Context, in *CheckSecretRequest, opts ...grpc.CallOption) (*CheckSecretResponce, error)
 	CreateTask(ctx context.Context, in *CreateTaskRequest, opts ...grpc.CallOption) (*CreateTaskResponce, error)
 	ListTasks(ctx context.Context, in *ListTasksRequest, opts ...grpc.CallOption) (*ListTasksResponce, error)
 	GetTaskById(ctx context.Context, in *TaskByIdRequest, opts ...grpc.CallOption) (*GetTaskByIdResponce, error)
@@ -51,6 +52,15 @@ func (c *toDoServiceClient) Login(ctx context.Context, in *LoginRequest, opts ..
 func (c *toDoServiceClient) Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponce, error) {
 	out := new(LogoutResponce)
 	err := c.cc.Invoke(ctx, "/todo_service.ToDoService/Logout", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *toDoServiceClient) CheckSecret(ctx context.Context, in *CheckSecretRequest, opts ...grpc.CallOption) (*CheckSecretResponce, error) {
+	out := new(CheckSecretResponce)
+	err := c.cc.Invoke(ctx, "/todo_service.ToDoService/CheckSecret", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,6 +118,7 @@ func (c *toDoServiceClient) DeleteTaskById(ctx context.Context, in *TaskByIdRequ
 type ToDoServiceServer interface {
 	Login(context.Context, *LoginRequest) (*LoginResponce, error)
 	Logout(context.Context, *LogoutRequest) (*LogoutResponce, error)
+	CheckSecret(context.Context, *CheckSecretRequest) (*CheckSecretResponce, error)
 	CreateTask(context.Context, *CreateTaskRequest) (*CreateTaskResponce, error)
 	ListTasks(context.Context, *ListTasksRequest) (*ListTasksResponce, error)
 	GetTaskById(context.Context, *TaskByIdRequest) (*GetTaskByIdResponce, error)
@@ -125,6 +136,9 @@ func (UnimplementedToDoServiceServer) Login(context.Context, *LoginRequest) (*Lo
 }
 func (UnimplementedToDoServiceServer) Logout(context.Context, *LogoutRequest) (*LogoutResponce, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
+}
+func (UnimplementedToDoServiceServer) CheckSecret(context.Context, *CheckSecretRequest) (*CheckSecretResponce, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckSecret not implemented")
 }
 func (UnimplementedToDoServiceServer) CreateTask(context.Context, *CreateTaskRequest) (*CreateTaskResponce, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateTask not implemented")
@@ -186,6 +200,24 @@ func _ToDoService_Logout_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ToDoServiceServer).Logout(ctx, req.(*LogoutRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ToDoService_CheckSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckSecretRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ToDoServiceServer).CheckSecret(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/todo_service.ToDoService/CheckSecret",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ToDoServiceServer).CheckSecret(ctx, req.(*CheckSecretRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -294,6 +326,10 @@ var ToDoService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Logout",
 			Handler:    _ToDoService_Logout_Handler,
+		},
+		{
+			MethodName: "CheckSecret",
+			Handler:    _ToDoService_CheckSecret_Handler,
 		},
 		{
 			MethodName: "CreateTask",
