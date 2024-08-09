@@ -52,11 +52,13 @@ func main() {
 	options := getOptions()
 
 	if options.Username == "" {
-		panic("username required")
+		fmt.Print("username: ")
+		fmt.Scanln(&options.Username)
 	}
 
 	if options.Password == "" {
-		panic("password required")
+		fmt.Print("password: ")
+		fmt.Scanln(&options.Password)
 	}
 
 	//Init app config
@@ -86,6 +88,5 @@ func main() {
 	wg.Wait()
 	storageProvider.Stop()
 	cancel()
-	
 
 }
