@@ -1,12 +1,13 @@
-package authService
+// Package authservice implements authentication service
+package authservice
 
 import (
 	"context"
 	"errors"
 	"log/slog"
 
-	secretsDTO "github.com/IldarGaleev/todo-backend-service/internal/lib/secrets/models"
-	serviceDTO "github.com/IldarGaleev/todo-backend-service/internal/services/models"
+	secretsDTO "github.com/IldarGaleev/todo-backend-service/internal/lib/secretsjwt/secretsdto"
+	serviceDTO "github.com/IldarGaleev/todo-backend-service/internal/services/servicedto"
 	"github.com/IldarGaleev/todo-backend-service/internal/storage"
 	storageDTO "github.com/IldarGaleev/todo-backend-service/internal/storage/models"
 	"golang.org/x/crypto/bcrypt"
@@ -21,7 +22,7 @@ var (
 
 type IAccountGetter interface {
 	GetAccountByUsername(ctx context.Context, username string) (*storageDTO.User, error)
-	GetAccountById(ctx context.Context, userId uint64) (*storageDTO.User, error)
+	GetAccountByID(ctx context.Context, userID uint64) (*storageDTO.User, error)
 }
 
 type ISecretProvider interface {
@@ -56,7 +57,7 @@ func (s *AuthService) CheckSecret(ctx context.Context, secret []byte) (*serviceD
 		return nil, ErrWrongSecret
 	}
 	return &serviceDTO.User{
-		UserId:   user.UserId,
+		UserID:   user.UserID,
 		Username: user.Username,
 	}, nil
 }
@@ -74,7 +75,7 @@ func (s *AuthService) DeleteSecret(ctx context.Context, secret []byte) error {
 func (s *AuthService) CreateUserSecret(ctx context.Context, user serviceDTO.User) (string, error) {
 	log := s.logger.With(slog.String("method", "CreateUserSecret"))
 
-	if (user.UserId == nil && user.Username == nil) || user.Password == "" {
+	if (user.UserID == nil && user.Username == nil) || user.Password == "" {
 		log.Error("wrong arguments")
 		return "", ErrArguments
 	}
@@ -85,7 +86,7 @@ func (s *AuthService) CreateUserSecret(ctx context.Context, user serviceDTO.User
 	if user.Username != nil {
 		userAccount, err = s.accountGetter.GetAccountByUsername(ctx, *user.Username)
 	} else {
-		userAccount, err = s.accountGetter.GetAccountById(ctx, *user.UserId)
+		userAccount, err = s.accountGetter.GetAccountByID(ctx, *user.UserID)
 	}
 
 	if err != nil {
@@ -104,7 +105,7 @@ func (s *AuthService) CreateUserSecret(ctx context.Context, user serviceDTO.User
 	}
 
 	secretBytes, err := s.secretProvider.CreateSecret(ctx, secretsDTO.User{
-		UserId:   &userAccount.Id,
+		UserID:   &userAccount.Id,
 		Username: &userAccount.Username,
 	})
 

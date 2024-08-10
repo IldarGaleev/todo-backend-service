@@ -1,3 +1,4 @@
+// Package fakedb implements fake database provider
 package fakedb
 
 import (
@@ -11,36 +12,36 @@ import (
 type FakeDatabaseProvider struct {
 	log      *slog.Logger
 	db       map[uint64]storageDTO.ToDoItem
-	db_index uint64
+	dbIndex uint64
 }
 
 // Create implements todo.IToDoItemProvider.
-func (d *FakeDatabaseProvider) StorageToDoItem_Create(ctx context.Context, title string, ownerId uint64) (uint64, error) {
-	d.db_index++
+func (d *FakeDatabaseProvider) StorageToDoItemCreate(ctx context.Context, title string, ownerID uint64) (uint64, error) {
+	d.dbIndex++
 	isDone := false
-	d.db[d.db_index] = storageDTO.ToDoItem{
-		Id:         d.db_index,
+	d.db[d.dbIndex] = storageDTO.ToDoItem{
+		Id:         d.dbIndex,
 		Title:      &title,
 		IsComplete: &isDone,
-		OwnerId:    ownerId,
+		OwnerId:    ownerID,
 	}
 
-	return d.db_index, nil
+	return d.dbIndex, nil
 }
 
 // DeleteById implements todo.IToDoItemProvider.
-func (d *FakeDatabaseProvider) StorageToDoItem_DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error {
-	if _, ok := d.db[itemId]; ok {
-		delete(d.db, itemId)
+func (d *FakeDatabaseProvider) StorageToDoItemDeleteByID(ctx context.Context, itemID uint64, ownerID uint64) error {
+	if _, ok := d.db[itemID]; ok {
+		delete(d.db, itemID)
 		return nil
 	}
 	return storage.ErrNotFound
 }
 
 // GetById implements todo.IToDoItemProvider.
-func (d *FakeDatabaseProvider) StorageToDoItem_GetById(ctx context.Context, itemId uint64, ownerId uint64) (*storageDTO.ToDoItem, error) {
-	if item, ok := d.db[itemId]; ok {
-		if item.OwnerId != ownerId {
+func (d *FakeDatabaseProvider) StorageToDoItemGetByID(ctx context.Context, itemID uint64, ownerID uint64) (*storageDTO.ToDoItem, error) {
+	if item, ok := d.db[itemID]; ok {
+		if item.OwnerId != ownerID {
 			return nil, storage.ErrAccessDenied
 		}
 		return &item, nil
@@ -49,10 +50,10 @@ func (d *FakeDatabaseProvider) StorageToDoItem_GetById(ctx context.Context, item
 }
 
 // GetList implements todo.IToDoItemProvider.
-func (d *FakeDatabaseProvider) StorageToDoItem_GetList(ctx context.Context, ownerId uint64) ([]storageDTO.ToDoItem, error) {
+func (d *FakeDatabaseProvider) StorageToDoItemGetList(ctx context.Context, ownerID uint64) ([]storageDTO.ToDoItem, error) {
 	result := make([]storageDTO.ToDoItem, 0)
 	for _, item := range d.db {
-		if item.OwnerId == ownerId {
+		if item.OwnerId == ownerID {
 			result = append(result, item)
 		}
 	}
@@ -60,9 +61,9 @@ func (d *FakeDatabaseProvider) StorageToDoItem_GetList(ctx context.Context, owne
 }
 
 // Update implements todo.IToDoItemProvider.
-func (d *FakeDatabaseProvider) StorageToDoItem_Update(ctx context.Context, item storageDTO.ToDoItem, ownerId uint64) error {
+func (d *FakeDatabaseProvider) StorageToDoItemUpdate(ctx context.Context, item storageDTO.ToDoItem, ownerID uint64) error {
 	if dbItem, ok := d.db[item.Id]; ok {
-		if dbItem.OwnerId != ownerId {
+		if dbItem.OwnerId != ownerID {
 			return storage.ErrAccessDenied
 		}
 

@@ -1,18 +1,17 @@
 /*
-Service entrypoint
+Package app Service entrypoint
 */
-
 package app
 
 import (
 	"log/slog"
 
-	configApp "github.com/IldarGaleev/todo-backend-service/internal/app/config"
-	grpcApp "github.com/IldarGaleev/todo-backend-service/internal/app/grpc"
-	secretsJwt "github.com/IldarGaleev/todo-backend-service/internal/lib/secrets"
+	configApp "github.com/IldarGaleev/todo-backend-service/internal/app/configapp"
+	grpcApp "github.com/IldarGaleev/todo-backend-service/internal/app/grpcapp"
+	secretsJwt "github.com/IldarGaleev/todo-backend-service/internal/lib/secretsjwt"
 	authService "github.com/IldarGaleev/todo-backend-service/internal/services/auth"
-	credentialService "github.com/IldarGaleev/todo-backend-service/internal/services/credential"
-	todoService "github.com/IldarGaleev/todo-backend-service/internal/services/todo"
+	credentialService "github.com/IldarGaleev/todo-backend-service/internal/services/credentialservice"
+	todoService "github.com/IldarGaleev/todo-backend-service/internal/services/todoservice"
 	"github.com/IldarGaleev/todo-backend-service/internal/storage/postgresdb"
 	faketempdb "github.com/IldarGaleev/todo-backend-service/internal/tempstorage/fakeTempDb"
 )

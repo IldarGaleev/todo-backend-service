@@ -1,27 +1,28 @@
-package todoService
+// Package todoservice implements TODO items operations
+package todoservice
 
 import (
 	"context"
 	"errors"
 	"log/slog"
 
-	serviceDTO "github.com/IldarGaleev/todo-backend-service/internal/services/models"
+	serviceDTO "github.com/IldarGaleev/todo-backend-service/internal/services/servicedto"
 	"github.com/IldarGaleev/todo-backend-service/internal/storage"
 	storageDTO "github.com/IldarGaleev/todo-backend-service/internal/storage/models"
 )
 
 type IToDoItemCreator interface {
-	StorageToDoItem_Create(ctx context.Context, title string, ownerId uint64) (uint64, error)
+	StorageToDoItemCreate(ctx context.Context, title string, ownerID uint64) (uint64, error)
 }
 type IToDoItemUpdater interface {
-	StorageToDoItem_Update(ctx context.Context, item storageDTO.ToDoItem, ownerId uint64) error
+	StorageToDoItemUpdate(ctx context.Context, item storageDTO.ToDoItem, ownerID uint64) error
 }
 type IToDoItemGetter interface {
-	StorageToDoItem_GetById(ctx context.Context, itemId uint64, ownerId uint64) (*storageDTO.ToDoItem, error)
-	StorageToDoItem_GetList(ctx context.Context, ownerId uint64) ([]storageDTO.ToDoItem, error)
+	StorageToDoItemGetByID(ctx context.Context, itemID uint64, ownerID uint64) (*storageDTO.ToDoItem, error)
+	StorageToDoItemGetList(ctx context.Context, ownerID uint64) ([]storageDTO.ToDoItem, error)
 }
 type IToDoItemDeleter interface {
-	StorageToDoItem_DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error
+	StorageToDoItemDeleteByID(ctx context.Context, itemID uint64, ownerID uint64) error
 }
 
 type TodoService struct {
@@ -54,16 +55,16 @@ func New(
 	}
 }
 
-func (s *TodoService) Create(ctx context.Context, title string, ownerId uint64) (uint64, error) {
-	id, err := s.todoItemsCreator.StorageToDoItem_Create(ctx, title, ownerId)
+func (s *TodoService) Create(ctx context.Context, title string, ownerID uint64) (uint64, error) {
+	id, err := s.todoItemsCreator.StorageToDoItemCreate(ctx, title, ownerID)
 	if err != nil {
 		return 0, errors.Join(ErrInternal, err)
 	}
 	return id, nil
 }
 
-func (s *TodoService) GetById(ctx context.Context, itemId uint64, ownerId uint64) (*serviceDTO.ToDoItem, error) {
-	item, err := s.todoItemsGetter.StorageToDoItem_GetById(ctx, itemId, ownerId)
+func (s *TodoService) GetByID(ctx context.Context, itemID uint64, ownerID uint64) (*serviceDTO.ToDoItem, error) {
+	item, err := s.todoItemsGetter.StorageToDoItemGetByID(ctx, itemID, ownerID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, ErrItemNotFound
@@ -71,20 +72,20 @@ func (s *TodoService) GetById(ctx context.Context, itemId uint64, ownerId uint64
 		return nil, errors.Join(ErrInternal, err)
 	}
 
-	if item.OwnerId != ownerId {
+	if item.OwnerId != ownerID {
 		return nil, ErrAccessDenied
 	}
 
 	return &serviceDTO.ToDoItem{
-		Id:         itemId,
-		OwnerId:    item.OwnerId,
+		ID:         itemID,
+		OwnerID:    item.OwnerId,
 		Title:      item.Title,
 		IsComplete: item.IsComplete,
 	}, nil
 }
 
-func (s *TodoService) GetList(ctx context.Context, ownerId uint64) ([]serviceDTO.ToDoItem, error) {
-	storageItems, err := s.todoItemsGetter.StorageToDoItem_GetList(ctx, ownerId)
+func (s *TodoService) GetList(ctx context.Context, ownerID uint64) ([]serviceDTO.ToDoItem, error) {
+	storageItems, err := s.todoItemsGetter.StorageToDoItemGetList(ctx, ownerID)
 	if err != nil {
 		return nil, errors.Join(ErrInternal, err)
 	}
@@ -92,8 +93,8 @@ func (s *TodoService) GetList(ctx context.Context, ownerId uint64) ([]serviceDTO
 
 	for _, todoItem := range storageItems {
 		result = append(result, serviceDTO.ToDoItem{
-			Id:         todoItem.Id,
-			OwnerId:    todoItem.OwnerId,
+			ID:         todoItem.Id,
+			OwnerID:    todoItem.OwnerId,
 			Title:      todoItem.Title,
 			IsComplete: todoItem.IsComplete,
 		})
@@ -102,8 +103,8 @@ func (s *TodoService) GetList(ctx context.Context, ownerId uint64) ([]serviceDTO
 	return result, nil
 }
 
-func (s *TodoService) DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error {
-	err := s.todoItemsDeleter.StorageToDoItem_DeleteById(ctx, itemId, ownerId)
+func (s *TodoService) DeleteByID(ctx context.Context, itemID uint64, ownerID uint64) error {
+	err := s.todoItemsDeleter.StorageToDoItemDeleteByID(ctx, itemID, ownerID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return ErrItemNotFound
@@ -114,16 +115,16 @@ func (s *TodoService) DeleteById(ctx context.Context, itemId uint64, ownerId uin
 	return nil
 }
 
-func (s *TodoService) Update(ctx context.Context, item serviceDTO.ToDoItem, ownerId uint64) error {
+func (s *TodoService) Update(ctx context.Context, item serviceDTO.ToDoItem, ownerID uint64) error {
 
 	storageItem := storageDTO.ToDoItem{
-		Id:         item.Id,
-		OwnerId:    item.Id,
+		Id:         item.ID,
+		OwnerId:    item.ID,
 		Title:      item.Title,
 		IsComplete: item.IsComplete,
 	}
 
-	err := s.todoItemsUpdater.StorageToDoItem_Update(ctx, storageItem, ownerId)
+	err := s.todoItemsUpdater.StorageToDoItemUpdate(ctx, storageItem, ownerID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return ErrItemNotFound

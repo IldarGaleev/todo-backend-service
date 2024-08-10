@@ -1,3 +1,4 @@
+// Package postgresdb implements Postgres data provider
 package postgresdb
 
 import (
@@ -5,10 +6,10 @@ import (
 	"errors"
 	"log/slog"
 
-	serviceDTO "github.com/IldarGaleev/todo-backend-service/internal/services/models"
+	serviceDTO "github.com/IldarGaleev/todo-backend-service/internal/services/servicedto"
 	"github.com/IldarGaleev/todo-backend-service/internal/storage"
 	storageDTO "github.com/IldarGaleev/todo-backend-service/internal/storage/models"
-	postgresStorageORM "github.com/IldarGaleev/todo-backend-service/internal/storage/postgresdb/models"
+	postgresStorageORM "github.com/IldarGaleev/todo-backend-service/internal/storage/postgresdb/postgresstorageorm"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -70,9 +71,9 @@ func (d *PostgresDataProvider) Stop() error {
 }
 
 // StorageToDoItem_Create implements todoService.IToDoItemCreator.
-func (d *PostgresDataProvider) StorageToDoItem_Create(ctx context.Context, title string, ownerId uint64) (uint64, error) {
+func (d *PostgresDataProvider) StorageToDoItemCreate(ctx context.Context, title string, ownerID uint64) (uint64, error) {
 	newItem := postgresStorageORM.ToDoItemPG{
-		OwnerId: ownerId,
+		OwnerID: ownerID,
 		Title:   title,
 	}
 
@@ -81,11 +82,11 @@ func (d *PostgresDataProvider) StorageToDoItem_Create(ctx context.Context, title
 		return 0, errors.Join(storage.ErrDatabaseError, result.Error)
 	}
 
-	return newItem.Id, nil
+	return newItem.ID, nil
 }
 
 // StorageToDoItem_Update implements todoService.IToDoItemUpdater.
-func (d *PostgresDataProvider) StorageToDoItem_Update(ctx context.Context, item storageDTO.ToDoItem, ownerId uint64) error {
+func (d *PostgresDataProvider) StorageToDoItemUpdate(ctx context.Context, item storageDTO.ToDoItem, ownerID uint64) error {
 
 	updatedFields := make(map[string]interface{}, 2)
 
@@ -97,7 +98,7 @@ func (d *PostgresDataProvider) StorageToDoItem_Update(ctx context.Context, item 
 		updatedFields["is_complete"] = *item.IsComplete
 	}
 
-	result := d.db.WithContext(ctx).Model(&postgresStorageORM.ToDoItemPG{Id: item.Id}).Updates(updatedFields)
+	result := d.db.WithContext(ctx).Model(&postgresStorageORM.ToDoItemPG{ID: item.Id}).Updates(updatedFields)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -110,9 +111,9 @@ func (d *PostgresDataProvider) StorageToDoItem_Update(ctx context.Context, item 
 }
 
 // StorageToDoItem_GetById implements todoService.IToDoItemGetter.
-func (d *PostgresDataProvider) StorageToDoItem_GetById(ctx context.Context, itemId uint64, ownerId uint64) (*storageDTO.ToDoItem, error) {
+func (d *PostgresDataProvider) StorageToDoItemGetByID(ctx context.Context, itemID uint64, ownerID uint64) (*storageDTO.ToDoItem, error) {
 	var item postgresStorageORM.ToDoItemPG
-	result := d.db.WithContext(ctx).First(&item, itemId)
+	result := d.db.WithContext(ctx).First(&item, itemID)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -122,29 +123,29 @@ func (d *PostgresDataProvider) StorageToDoItem_GetById(ctx context.Context, item
 	}
 
 	return &storageDTO.ToDoItem{
-		Id:         item.Id,
+		Id:         item.ID,
 		Title:      &item.Title,
 		IsComplete: &item.IsComplete,
-		OwnerId:    item.OwnerId,
+		OwnerId:    item.OwnerID,
 	}, nil
 }
 
 // StorageToDoItem_GetList implements todoService.IToDoItemGetter.
-func (d *PostgresDataProvider) StorageToDoItem_GetList(ctx context.Context, ownerId uint64) ([]storageDTO.ToDoItem, error) {
+func (d *PostgresDataProvider) StorageToDoItemGetList(ctx context.Context, ownerID uint64) ([]storageDTO.ToDoItem, error) {
 	var items []postgresStorageORM.ToDoItemPG
 	var resultList []storageDTO.ToDoItem
 
-	result := d.db.WithContext(ctx).Find(&items, "owner_id = ?", ownerId)
+	result := d.db.WithContext(ctx).Find(&items, "owner_id = ?", ownerID)
 	if result.Error != nil {
 		return resultList, result.Error
 	}
 
 	for _, item := range items {
 		resultList = append(resultList, storageDTO.ToDoItem{
-			Id:         item.Id,
+			Id:         item.ID,
 			Title:      &item.Title,
 			IsComplete: &item.IsComplete,
-			OwnerId:    item.OwnerId,
+			OwnerId:    item.OwnerID,
 		})
 	}
 
@@ -152,8 +153,8 @@ func (d *PostgresDataProvider) StorageToDoItem_GetList(ctx context.Context, owne
 }
 
 // StorageToDoItem_DeleteById implements todoService.IToDoItemDeleter.
-func (d *PostgresDataProvider) StorageToDoItem_DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error {
-	result := d.db.WithContext(ctx).Delete(&postgresStorageORM.ToDoItemPG{}, itemId)
+func (d *PostgresDataProvider) StorageToDoItemDeleteByID(ctx context.Context, itemID uint64, ownerID uint64) error {
+	result := d.db.WithContext(ctx).Delete(&postgresStorageORM.ToDoItemPG{}, itemID)
 
 	if result.Error != nil {
 		return errors.Join(storage.ErrDatabaseError, result.Error)
@@ -180,9 +181,9 @@ func (d *PostgresDataProvider) GetCredential(username string) (*storageDTO.Crede
 // var _ authService.IAccountGetter = (*PostgresDataProvider)(nil)
 
 // GetAccountById implements authService.IAccountGetter.
-func (d *PostgresDataProvider) GetAccountById(ctx context.Context, userId uint64) (*storageDTO.User, error) {
+func (d *PostgresDataProvider) GetAccountByID(ctx context.Context, userID uint64) (*storageDTO.User, error) {
 	var user storageDTO.User
-	result := d.db.WithContext(ctx).First(&user, userId)
+	result := d.db.WithContext(ctx).First(&user, userID)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -222,7 +223,7 @@ func (d *PostgresDataProvider) CreateAccount(ctx context.Context, username strin
 	}
 
 	return &serviceDTO.User{
-		UserId: &newUser.Id, 
+		UserID: &newUser.ID, 
 		Username: &newUser.Username,
 		}, nil
 }

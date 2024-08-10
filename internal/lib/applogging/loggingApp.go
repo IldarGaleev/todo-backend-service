@@ -1,4 +1,5 @@
-package appLogging
+// Package applogging implements logging provider
+package applogging
 
 import (
 	"log/slog"
@@ -8,9 +9,9 @@ import (
 type EnvMode string
 
 const (
-	ENV_MODE_LOCAL EnvMode = "local"
-	ENV_MODE_DEV   EnvMode = "dev"
-	ENV_MODE_PROD  EnvMode = "prod"
+	EnvModeLocal EnvMode = "local"
+	EnvModeDev   EnvMode = "dev"
+	EnvModeProd  EnvMode = "prod"
 )
 
 type LogApp struct {
@@ -21,7 +22,7 @@ type LogApp struct {
 func New(mode EnvMode) *LogApp {
 	var log *slog.Logger
 	switch mode {
-	case ENV_MODE_LOCAL:
+	case EnvModeLocal:
 		{
 			log = slog.New(
 				slog.NewTextHandler(
@@ -32,7 +33,7 @@ func New(mode EnvMode) *LogApp {
 				),
 			)
 		}
-	case ENV_MODE_DEV:
+	case EnvModeDev:
 		{
 			log = slog.New(
 				slog.NewJSONHandler(

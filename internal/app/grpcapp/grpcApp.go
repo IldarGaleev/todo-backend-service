@@ -1,7 +1,5 @@
-/*
-Implements gRPC Application
-*/
-package grpcApp
+// Package grpcapp implements gRPC Application
+package grpcapp
 
 import (
 	"context"
@@ -10,7 +8,7 @@ import (
 	"log/slog"
 	"net"
 
-	grpcToDoServer "github.com/IldarGaleev/todo-backend-service/internal/grpc/todo"
+	grpcToDoServer "github.com/IldarGaleev/todo-backend-service/internal/grpc/grpctodoserver"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"

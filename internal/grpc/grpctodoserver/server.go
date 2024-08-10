@@ -1,10 +1,12 @@
 // TODO: split to auth and todo items grpc....
-package grpcToDoServer
+
+// Package grpctodoserver implements gRPC handlers
+package grpctodoserver
 
 import (
 	"context"
 
-	serviceDTO "github.com/IldarGaleev/todo-backend-service/internal/services/models"
+	serviceDTO "github.com/IldarGaleev/todo-backend-service/internal/services/servicedto"
 	todo_protobuf_v1 "github.com/IldarGaleev/todo-backend-service/pkg/grpc/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -12,20 +14,20 @@ import (
 )
 
 type IToDoItemCreatorService interface {
-	Create(ctx context.Context, title string, ownerId uint64) (uint64, error)
+	Create(ctx context.Context, title string, ownerID uint64) (uint64, error)
 }
 
 type IToDoItemGetterService interface {
-	GetById(ctx context.Context, itemId uint64, ownerId uint64) (*serviceDTO.ToDoItem, error)
-	GetList(ctx context.Context, ownerId uint64) ([]serviceDTO.ToDoItem, error)
+	GetByID(ctx context.Context, itemID uint64, ownerID uint64) (*serviceDTO.ToDoItem, error)
+	GetList(ctx context.Context, ownerID uint64) ([]serviceDTO.ToDoItem, error)
 }
 
 type IToDoItemDeleterService interface {
-	DeleteById(ctx context.Context, itemId uint64, ownerId uint64) error
+	DeleteByID(ctx context.Context, itemID uint64, ownerID uint64) error
 }
 
 type IToDoItemUpdaterService interface {
-	Update(ctx context.Context, item serviceDTO.ToDoItem, ownerId uint64) error
+	Update(ctx context.Context, item serviceDTO.ToDoItem, ownerID uint64) error
 }
 
 type IAccountSecretCreator interface {
@@ -130,7 +132,7 @@ func (s *serverAPI) CheckSecret(
 	}
 
 	return &todo_protobuf_v1.CheckSecretResponce{
-		UserId: *user.UserId,
+		UserId: *user.UserID,
 		Email:  *user.Username,
 	}, nil
 }
@@ -163,7 +165,7 @@ func (s *serverAPI) ListTasks(
 	responseItems := make([]*todo_protobuf_v1.GetTaskByIdResponce, 0, len(items))
 	for _, item := range items {
 		responseItems = append(responseItems, &todo_protobuf_v1.GetTaskByIdResponce{
-			TaskId: item.Id,
+			TaskId: item.ID,
 			Title:  *item.Title,
 			IsDone: *item.IsComplete,
 		})
@@ -173,11 +175,11 @@ func (s *serverAPI) ListTasks(
 	}, nil
 }
 
-func (s *serverAPI) GetTaskById(
+func (s *serverAPI) GetTaskByID(
 	ctx context.Context,
 	req *todo_protobuf_v1.TaskByIdRequest,
 ) (*todo_protobuf_v1.GetTaskByIdResponce, error) {
-	item, err := s.todoItemsGetterService.GetById(ctx, req.GetTaskId(), req.GetUserId())
+	item, err := s.todoItemsGetterService.GetByID(ctx, req.GetTaskId(), req.GetUserId())
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "Item not found")
 	}
@@ -189,13 +191,13 @@ func (s *serverAPI) GetTaskById(
 	}, nil
 }
 
-func (s *serverAPI) UpdateTaskById(
+func (s *serverAPI) UpdateTaskByID(
 	ctx context.Context,
 	req *todo_protobuf_v1.UpdateTaskByIdRequest,
 ) (*todo_protobuf_v1.ChangedTaskByIdResponce, error) {
 
 	err := s.todoItemsUpdaterService.Update(ctx, serviceDTO.ToDoItem{
-		Id:         req.GetTaskId(),
+		ID:         req.GetTaskId(),
 		Title:      req.Title,
 		IsComplete: req.IsDone,
 	}, req.GetUserId())
@@ -210,11 +212,11 @@ func (s *serverAPI) UpdateTaskById(
 	}, nil
 }
 
-func (s *serverAPI) DeleteTaskById(
+func (s *serverAPI) DeleteTaskByID(
 	ctx context.Context,
 	req *todo_protobuf_v1.TaskByIdRequest,
 ) (*todo_protobuf_v1.ChangedTaskByIdResponce, error) {
-	err := s.todoItemsDeleterService.DeleteById(ctx, req.GetTaskId(), req.GetUserId())
+	err := s.todoItemsDeleterService.DeleteByID(ctx, req.GetTaskId(), req.GetUserId())
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "Item not found")
 	}

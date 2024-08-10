@@ -1,3 +1,4 @@
+// Package storage contains storage layer types
 package storage
 
 import (

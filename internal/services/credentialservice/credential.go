@@ -1,4 +1,5 @@
-package credentialService
+// Package credentialservice implements credential handlers for gRPC server
+package credentialservice
 
 import (
 	"log/slog"

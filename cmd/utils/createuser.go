@@ -12,7 +12,7 @@ import (
 	"github.com/IldarGaleev/todo-backend-service/internal/storage/postgresdb"
 	"golang.org/x/crypto/bcrypt"
 
-	configApp "github.com/IldarGaleev/todo-backend-service/internal/app/config"
+	configApp "github.com/IldarGaleev/todo-backend-service/internal/app/configapp"
 )
 
 type createUserOptions struct {
@@ -81,7 +81,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("Created new user with id: %d", *newUser.UserId)
+		fmt.Printf("Created new user with id: %d", *newUser.UserID)
 		wg.Done()
 	}(options)
 

@@ -1,3 +1,4 @@
+// Package faketempdb implements fake temp storage provider
 package faketempdb
 
 import (
@@ -5,31 +6,31 @@ import (
 	"log/slog"
 )
 
-type FakeTempDb struct {
+type FakeTempDB struct {
 	log         *slog.Logger
 	database    map[uint64]interface{}
-	lastTokenId uint64
+	lastTokenID uint64
 }
 
-func New(logger *slog.Logger) *FakeTempDb {
-	return &FakeTempDb{
+func New(logger *slog.Logger) *FakeTempDB {
+	return &FakeTempDB{
 		log:         logger,
 		database:    make(map[uint64]interface{}, 10),
-		lastTokenId: 0,
+		lastTokenID: 0,
 	}
 }
 
-func (d *FakeTempDb) IsJWTRevoked(ctx context.Context, id uint64) bool {
+func (d *FakeTempDB) IsJWTRevoked(ctx context.Context, id uint64) bool {
 	_, ok := d.database[id]
 	return ok
 }
 
-func (d *FakeTempDb) RevokeJWT(ctx context.Context, id uint64) {
+func (d *FakeTempDB) RevokeJWT(ctx context.Context, id uint64) {
 	var a interface{}
 	d.database[id] = a
 }
 
-func (d *FakeTempDb) CreateNewId(ctx context.Context) uint64 {
-	d.lastTokenId++
-	return d.lastTokenId
+func (d *FakeTempDB) CreateNewID(ctx context.Context) uint64 {
+	d.lastTokenID++
+	return d.lastTokenID
 }

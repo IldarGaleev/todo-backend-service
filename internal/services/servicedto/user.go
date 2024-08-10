@@ -1,7 +1,7 @@
-package serviceDTO
+package servicedto
 
 type User struct {
-	UserId   *uint64
+	UserID   *uint64
 	Username *string
 	Password string
 }

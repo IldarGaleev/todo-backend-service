@@ -7,8 +7,8 @@ import (
 	"syscall"
 
 	"github.com/IldarGaleev/todo-backend-service/internal/app"
-	configApp "github.com/IldarGaleev/todo-backend-service/internal/app/config"
-	appLogging "github.com/IldarGaleev/todo-backend-service/internal/lib/logging"
+	configApp "github.com/IldarGaleev/todo-backend-service/internal/app/configapp"
+	appLogging "github.com/IldarGaleev/todo-backend-service/internal/lib/applogging"
 )
 
 func main() {
