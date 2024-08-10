@@ -1,4 +1,5 @@
-package secretsJwt
+// Package secretsjwt implements secrets for JWT
+package secretsjwt
 
 import (
 	"context"
@@ -6,8 +7,8 @@ import (
 	"log/slog"
 	"time"
 
-	configApp "github.com/IldarGaleev/todo-backend-service/internal/app/config"
-	secretsDTO "github.com/IldarGaleev/todo-backend-service/internal/lib/secrets/models"
+	configApp "github.com/IldarGaleev/todo-backend-service/internal/app/configapp"
+	secretsDTO "github.com/IldarGaleev/todo-backend-service/internal/lib/secretsjwt/secretsdto"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -17,7 +18,7 @@ var (
 )
 
 type IJWTIndexer interface {
-	CreateNewId(ctx context.Context) uint64
+	CreateNewID(ctx context.Context) uint64
 }
 
 type IJWTRevoker interface {
@@ -34,9 +35,9 @@ type SecretJWT struct {
 }
 
 type TokenClaims struct {
-	UserId   uint64 `json:"userid"`
+	UserID   uint64 `json:"userid"`
 	Username string `json:"username"`
-	TokenId  uint64 `json:"tokenid"`
+	TokenID  uint64 `json:"tokenid"`
 	jwt.RegisteredClaims
 }
 
@@ -79,7 +80,7 @@ func (s *SecretJWT) ValidateSecret(ctx context.Context, secret []byte) (*secrets
 	log := s.logger.With(slog.String("method", "ValidateSecret"))
 
 	claims, err := s.decodeToken(secret)
-	if s.jwtRevoker.IsJWTRevoked(ctx, claims.TokenId) {
+	if s.jwtRevoker.IsJWTRevoked(ctx, claims.TokenID) {
 		return nil, ErrVerifyError
 	}
 
@@ -89,7 +90,7 @@ func (s *SecretJWT) ValidateSecret(ctx context.Context, secret []byte) (*secrets
 	}
 
 	return &secretsDTO.User{
-		UserId:   &claims.UserId,
+		UserID:   &claims.UserID,
 		Username: &claims.Username,
 	}, nil
 
@@ -99,9 +100,9 @@ func (s *SecretJWT) CreateSecret(ctx context.Context, user secretsDTO.User) ([]b
 	log := s.logger.With(slog.String("method", "CreateSecret"))
 
 	claims := TokenClaims{
-		UserId:   *user.UserId,
+		UserID:   *user.UserID,
 		Username: *user.Username,
-		TokenId:  s.jwtIndexer.CreateNewId(ctx),
+		TokenID:  s.jwtIndexer.CreateNewID(ctx),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.maxAge)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -131,9 +132,9 @@ func (s *SecretJWT) DeleteSecret(ctx context.Context, secret []byte) error {
 		log.Debug("jwt parse error", slog.Any("err", err))
 		return ErrVerifyError
 	}
-	if s.jwtRevoker.IsJWTRevoked(ctx, claims.TokenId) {
+	if s.jwtRevoker.IsJWTRevoked(ctx, claims.TokenID) {
 		return ErrVerifyError
 	}
-	s.jwtRevoker.RevokeJWT(ctx, claims.TokenId)
+	s.jwtRevoker.RevokeJWT(ctx, claims.TokenID)
 	return nil
 }

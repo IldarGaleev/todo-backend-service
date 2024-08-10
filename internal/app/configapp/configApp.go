@@ -1,7 +1,5 @@
-/*
-Implements application configuration
-*/
-package configApp
+// Package configapp implements application configuration
+package configapp
 
 import (
 	"time"

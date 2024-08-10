@@ -11,9 +11,9 @@ service ToDoService {
     
     rpc CreateTask (CreateTaskRequest) returns (CreateTaskResponce);
     rpc ListTasks (ListTasksRequest) returns (ListTasksResponce);
-    rpc GetTaskById (TaskByIdRequest) returns (GetTaskByIdResponce);
-    rpc UpdateTaskById (UpdateTaskByIdRequest) returns (ChangedTaskByIdResponce);
-    rpc DeleteTaskById (TaskByIdRequest) returns (ChangedTaskByIdResponce);    
+    rpc GetTaskByID (TaskByIdRequest) returns (GetTaskByIdResponce);
+    rpc UpdateTaskByID (UpdateTaskByIdRequest) returns (ChangedTaskByIdResponce);
+    rpc DeleteTaskByID (TaskByIdRequest) returns (ChangedTaskByIdResponce);    
 }
 
 message LoginRequest{
