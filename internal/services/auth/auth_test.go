@@ -7,12 +7,13 @@ import (
 	"github.com/IldarGaleev/todo-backend-service/internal/services/auth/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"io"
 	"log/slog"
 	"testing"
 )
 
 func createAuthService(t *testing.T) (*mocks.ISecretProvider, *mocks.IAccountGetter, *AuthService) {
-	logger := slog.Default()
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
 	secretProvider := mocks.NewISecretProvider(t)
 	accountGetter := mocks.NewIAccountGetter(t)
