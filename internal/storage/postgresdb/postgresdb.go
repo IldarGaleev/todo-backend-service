@@ -4,13 +4,14 @@ package postgresdb
 import (
 	"context"
 	"errors"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm/logger"
 	"log/slog"
 
 	serviceDTO "github.com/IldarGaleev/todo-backend-service/internal/services/servicedto"
 	"github.com/IldarGaleev/todo-backend-service/internal/storage"
 	storageDTO "github.com/IldarGaleev/todo-backend-service/internal/storage/models"
 	postgresStorageORM "github.com/IldarGaleev/todo-backend-service/internal/storage/postgresdb/postgresstorageorm"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -23,7 +24,7 @@ type PostgresDataProvider struct {
 // New create DatabaseApp
 func New(log *slog.Logger, dsn string) *PostgresDataProvider {
 	return &PostgresDataProvider{
-		log: log.With(slog.String("module","postgresdb")),
+		log: log.With(slog.String("module", "postgresdb")),
 		dsn: dsn,
 	}
 }
@@ -37,17 +38,34 @@ func (d *PostgresDataProvider) MustRun() {
 }
 
 // Run create postgres database connection
-func (d *PostgresDataProvider) Run() error {
-	db, err := gorm.Open(postgres.Open(d.dsn), &gorm.Config{})
+func (d *PostgresDataProvider) runWithDialector(dialector gorm.Dialector, silentLog bool) error {
+	db, err := gorm.Open(dialector, &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
+	})
+
+	if silentLog {
+		db.Config.Logger = logger.Default.LogMode(logger.Silent)
+	}
+
 	if err != nil {
 		return errors.Join(storage.ErrDatabaseError, err)
 	}
 	d.db = db
-	db.AutoMigrate(
+
+	err = db.AutoMigrate(
 		&postgresStorageORM.UserPG{},
 		&postgresStorageORM.ToDoItemPG{},
 	)
+
+	if err != nil {
+		return errors.Join(storage.ErrDatabaseError, err)
+	}
+
 	return nil
+}
+
+func (d *PostgresDataProvider) Run() error {
+	return d.runWithDialector(postgres.Open(d.dsn), true)
 }
 
 // Stop close postgres database connection
@@ -169,7 +187,7 @@ func (d *PostgresDataProvider) StorageToDoItemDeleteByID(ctx context.Context, it
 
 // GetCredential implements credentialService.ICredentialStorageProvider.
 func (d *PostgresDataProvider) GetCredential(username string) (*storageDTO.Credential, error) {
-	log:=d.log.With(slog.String("method","GetCredential"))
+	log := d.log.With(slog.String("method", "GetCredential"))
 	log.Warn("get credential not implement")
 	return &storageDTO.Credential{
 		Username:  "user",
@@ -223,7 +241,7 @@ func (d *PostgresDataProvider) CreateAccount(ctx context.Context, username strin
 	}
 
 	return &serviceDTO.User{
-		UserID: &newUser.ID, 
+		UserID:   &newUser.ID,
 		Username: &newUser.Username,
-		}, nil
+	}, nil
 }
