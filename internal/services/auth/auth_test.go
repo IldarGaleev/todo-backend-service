@@ -217,3 +217,33 @@ func TestAuthService_CreateUserSecret_InvalidUserPassword(t *testing.T) {
 		})
 	}
 }
+
+func TestAuthService_DeleteSecret_Success(t *testing.T) {
+	ctx := context.Background()
+	secretProvider, _, authService := createAuthService(t)
+
+	secretProvider.On(
+		"DeleteSecret",
+		mock.Anything,
+		mock.Anything,
+	).Return(nil)
+
+	err := authService.DeleteSecret(ctx, nil)
+
+	require.NoError(t, err)
+}
+
+func TestAuthService_DeleteSecret_Failed(t *testing.T) {
+	ctx := context.Background()
+	secretProvider, _, authService := createAuthService(t)
+
+	secretProvider.On(
+		"DeleteSecret",
+		mock.Anything,
+		mock.Anything,
+	).Return(errors.New("delete secret failed"))
+
+	err := authService.DeleteSecret(ctx, nil)
+
+	require.ErrorIs(t, err, ErrWrongSecret)
+}
