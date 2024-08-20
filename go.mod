@@ -3,6 +3,7 @@ module github.com/IldarGaleev/todo-backend-service
 go 1.22.5
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/IldarGaleev/todo-backend-service/pkg/grpc/proto v1.0.5
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/ilyakaznacheev/cleanenv v1.5.0
