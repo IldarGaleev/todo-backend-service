@@ -44,35 +44,55 @@ func TestPostgresDataProvider_GetAccountByID_Success(t *testing.T) {
 
 	storageService, mock := createStorage(t)
 
+	userId := uint64(99)
+	username := "user1"
+	userPasswordHash := []byte("hash")
+
 	rows := sqlmock.NewRows(
 		[]string{
 			"id",
 			"username",
 			"password_hash",
 		}).AddRow(
-		1,
-		"user",
-		[]byte("hash"),
+		userId,
+		username,
+		userPasswordHash,
 	)
 
-	mock.ExpectQuery(`SELECT`).WillReturnRows(rows)
+	mock.ExpectQuery(`SELECT`).WithArgs(userId, 1).WillReturnRows(rows)
 
-	usr, err := storageService.GetAccountByID(ctx, 1)
+	usr, err := storageService.GetAccountByID(ctx, userId)
 
 	require.NoError(t, err)
 
-	require.Equal(t, "user", usr.Username)
-	require.Equal(t, []byte("hash"), usr.PasswordHash)
-	require.Equal(t, uint64(1), usr.Id)
+	require.Equal(t, username, usr.Username)
+	require.Equal(t, userPasswordHash, usr.PasswordHash)
+	require.Equal(t, userId, usr.Id)
 }
 
-func TestPostgresDataProvider_GetAccountByID_Error(t *testing.T) {
+func TestPostgresDataProvider_GetAccountByID_Error_NotFound(t *testing.T) {
 	ctx := context.Background()
 	storageService, mock := createStorage(t)
-	mock.ExpectQuery(`SELECT`).WillReturnError(gorm.ErrRecordNotFound)
 
-	usr, err := storageService.GetAccountByID(ctx, 1)
+	userId := uint64(99)
+
+	mock.ExpectQuery(`SELECT`).WithArgs(userId, 1).WillReturnError(gorm.ErrRecordNotFound)
+
+	usr, err := storageService.GetAccountByID(ctx, userId)
 	require.ErrorIs(t, err, storage.ErrNotFound)
+	require.Nil(t, usr)
+}
+
+func TestPostgresDataProvider_GetAccountByID_Error_DBInternal(t *testing.T) {
+	ctx := context.Background()
+	storageService, mock := createStorage(t)
+
+	userId := uint64(99)
+
+	mock.ExpectQuery(`SELECT`).WithArgs(userId, 1).WillReturnError(gorm.ErrInvalidDB)
+
+	usr, err := storageService.GetAccountByID(ctx, userId)
+	require.ErrorIs(t, err, storage.ErrDatabaseError)
 	require.Nil(t, usr)
 }
 
