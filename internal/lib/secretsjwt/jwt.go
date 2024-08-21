@@ -80,12 +80,12 @@ func (s *SecretJWT) ValidateSecret(ctx context.Context, secret []byte) (*secrets
 	log := s.logger.With(slog.String("method", "ValidateSecret"))
 
 	claims, err := s.decodeToken(secret)
-	if s.jwtRevoker.IsJWTRevoked(ctx, claims.TokenID) {
+	if err != nil {
+		log.Debug("jwt parse error", slog.Any("err", err))
 		return nil, ErrVerifyError
 	}
 
-	if err != nil {
-		log.Debug("jwt parse error", slog.Any("err", err))
+	if s.jwtRevoker.IsJWTRevoked(ctx, claims.TokenID) {
 		return nil, ErrVerifyError
 	}
 

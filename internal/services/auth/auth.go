@@ -20,11 +20,13 @@ var (
 	ErrInternal    = errors.New("internal error")
 )
 
+//go:generate mockery --name IAccountGetter
 type IAccountGetter interface {
 	GetAccountByUsername(ctx context.Context, username string) (*storageDTO.User, error)
 	GetAccountByID(ctx context.Context, userID uint64) (*storageDTO.User, error)
 }
 
+//go:generate mockery --name ISecretProvider
 type ISecretProvider interface {
 	CreateSecret(ctx context.Context, user secretsDTO.User) ([]byte, error)
 	ValidateSecret(ctx context.Context, secret []byte) (*secretsDTO.User, error)
