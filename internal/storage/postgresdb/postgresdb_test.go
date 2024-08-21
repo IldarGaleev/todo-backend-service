@@ -75,3 +75,58 @@ func TestPostgresDataProvider_GetAccountByID_Error(t *testing.T) {
 	require.ErrorIs(t, err, storage.ErrNotFound)
 	require.Nil(t, usr)
 }
+
+func TestPostgresDataProvider_GetAccountByUsername_Success(t *testing.T) {
+	ctx := context.Background()
+
+	storageService, mock := createStorage(t)
+
+	username := "user1"
+
+	rows := sqlmock.NewRows(
+		[]string{
+			"id",
+			"username",
+			"password_hash",
+		}).AddRow(
+		1,
+		username,
+		[]byte("hash"),
+	)
+
+	mock.ExpectQuery(`SELECT`).WithArgs(username, 1).WillReturnRows(rows)
+
+	usr, err := storageService.GetAccountByUsername(ctx, username)
+
+	require.NoError(t, err)
+
+	require.Equal(t, username, usr.Username)
+	require.Equal(t, []byte("hash"), usr.PasswordHash)
+	require.Equal(t, uint64(1), usr.Id)
+}
+
+func TestPostgresDataProvider_GetAccountByUsername_Error_NotFound(t *testing.T) {
+	ctx := context.Background()
+	storageService, mock := createStorage(t)
+
+	username := "user1"
+
+	mock.ExpectQuery(`SELECT`).WithArgs(username, 1).WillReturnError(gorm.ErrRecordNotFound)
+
+	usr, err := storageService.GetAccountByUsername(ctx, username)
+	require.ErrorIs(t, err, storage.ErrNotFound)
+	require.Nil(t, usr)
+}
+
+func TestPostgresDataProvider_GetAccountByUsername_Error_DBInternal(t *testing.T) {
+	ctx := context.Background()
+	storageService, mock := createStorage(t)
+
+	username := "user1"
+
+	mock.ExpectQuery(`SELECT`).WithArgs(username, 1).WillReturnError(gorm.ErrInvalidDB)
+
+	usr, err := storageService.GetAccountByUsername(ctx, username)
+	require.ErrorIs(t, err, storage.ErrDatabaseError)
+	require.Nil(t, usr)
+}
