@@ -2,26 +2,28 @@
 package configapp
 
 import (
+	"errors"
+	"os"
 	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type AppConfig struct {
-	EnvMode string `env:"ENV_MODE" env-default:"prod"`
-	Port    int    `env:"PORT" env-default:"9090"`
-	Dsn     string `env:"DSN" env-require:"true"`
+	EnvMode string `yaml:"env-mode" env:"ENV_MODE" env-default:"prod"`
+	Port    int    `yaml:"port" env:"PORT" env-default:"9090"`
+	Dsn     string `yaml:"dsn" env:"DSN" env-require:"true"`
 
-	SecretKey     []byte        `env:"SECRET_KEY" env-require:"true"`
-	SecretsMaxAge time.Duration `env:"SECRETS_MAX_AGE" env-default:"24h"`
+	SecretKey     []byte        `yaml:"secret-key" env:"SECRET_KEY" env-require:"true"`
+	SecretsMaxAge time.Duration `yaml:"secrets-max-age" env:"SECRETS_MAX_AGE" env-default:"24h"`
 }
 
 // MustLoadConfig returns app configuration. Panic if failed
-func MustLoadConfig() *AppConfig {
-	//TODO: add loading config from file
+func MustLoadConfig(confPath string) *AppConfig {
 	var appConf AppConfig
-	err := cleanenv.ReadEnv(&appConf)
-	if err != nil {
+
+	err := cleanenv.ReadConfig(confPath, &appConf)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		panic(err)
 	}
 	return &appConf

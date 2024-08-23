@@ -61,8 +61,9 @@ func main() {
 		fmt.Scanln(&options.Password)
 	}
 
+	confPath := "config.yml"
 	//Init app config
-	appConf := configApp.MustLoadConfig()
+	appConf := configApp.MustLoadConfig(confPath)
 
 	storageProvider := postgresdb.New(log, appConf.Dsn)
 	storageProvider.MustRun()
