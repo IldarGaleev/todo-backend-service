@@ -52,13 +52,39 @@ func main() {
 	options := getOptions()
 
 	if options.Username == "" {
-		fmt.Print("username: ")
-		fmt.Scanln(&options.Username)
+		for {
+			fmt.Print("username: ")
+			n, err := fmt.Scanln(&options.Username)
+
+			if n == 0 {
+				err = fmt.Errorf("empty username")
+			}
+
+			if err != nil {
+				fmt.Println(err)
+				fmt.Println("Try again")
+				continue
+			}
+			break
+		}
 	}
 
 	if options.Password == "" {
-		fmt.Print("password: ")
-		fmt.Scanln(&options.Password)
+		for {
+			fmt.Print("password: ")
+			n, err := fmt.Scanln(&options.Password)
+
+			if n == 0 {
+				err = fmt.Errorf("empty password")
+			}
+
+			if err != nil {
+				fmt.Println(err)
+				fmt.Println("Try again")
+				continue
+			}
+			break
+		}
 	}
 
 	confPath := "config.yml"
