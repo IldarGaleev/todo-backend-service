@@ -21,13 +21,14 @@ type IStorageProvider interface {
 	Stop() error
 }
 
-// Main application
+// App Main application
 type App struct {
+	logger          *slog.Logger
 	grpcServer      *grpcApp.App
 	storageProvider IStorageProvider
 }
 
-// Create main application instance
+// New Create main application instance
 func New(
 	log *slog.Logger,
 	config *configApp.AppConfig,
@@ -42,7 +43,7 @@ func New(
 		tokenStorage,
 	)
 
-	todoService := todoService.New(
+	todoSrv := todoService.New(
 		log,
 		storageProvider,
 		storageProvider,
@@ -50,23 +51,24 @@ func New(
 		storageProvider,
 	)
 
-	authService := authService.New(
+	authSrv := authService.New(
 		log,
 		secretProvider,
 		storageProvider,
 	)
 
 	return &App{
+		logger: log.With("module", "app"),
 		grpcServer: grpcApp.New(
 			log,
 			config.Port,
-			todoService,
-			todoService,
-			todoService,
-			todoService,
-			authService,
-			authService,
-			authService,
+			todoSrv,
+			todoSrv,
+			todoSrv,
+			todoSrv,
+			authSrv,
+			authSrv,
+			authSrv,
 			credentialService.New(log, storageProvider),
 		),
 		storageProvider: storageProvider,
@@ -80,5 +82,8 @@ func (app *App) MustRun() {
 
 func (app *App) Stop() {
 	app.grpcServer.Stop()
-	app.storageProvider.Stop()
+	err := app.storageProvider.Stop()
+	if err != nil {
+		app.logger.Error("failed stop service", slog.Any("err", err))
+	}
 }
