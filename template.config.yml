@@ -1,0 +1,8 @@
+
+env-mode: 'local' # 'dev','prod'
+
+port: 9090
+dsn: "" #db connection string: host=localhost dbname=dbname user=postgres password=postgres sslmode=disable
+
+secret-key: []
+secrets-max-age: "24h"

@@ -150,3 +150,48 @@ func TestPostgresDataProvider_GetAccountByUsername_Error_DBInternal(t *testing.T
 	require.ErrorIs(t, err, storage.ErrDatabaseError)
 	require.Nil(t, usr)
 }
+
+func TestPostgresDataProvider_CreateAccount_Success(t *testing.T) {
+	ctx := context.Background()
+	storageService, mock := createStorage(t)
+
+	username := "user1"
+	passwordHash := []byte("pass")
+
+	mock.ExpectBegin()
+	mock.ExpectQuery(`^INSERT INTO "users" (.+)$`).
+		WithArgs(username, passwordHash).
+		WillReturnRows(
+			sqlmock.NewRows([]string{"id"}).
+				AddRow(1),
+		)
+	mock.ExpectCommit()
+
+	usr, err := storageService.CreateAccount(ctx, username, passwordHash)
+	require.NoError(t, err)
+	require.Equal(t, "user1", *usr.Username)
+}
+
+func TestPostgresDataProvider_CreateAccount_Error_DBInternal(t *testing.T) {
+	ctx := context.Background()
+	storageService, mock := createStorage(t)
+
+	username := "user1"
+	passwordHash := []byte("pass")
+
+	mock.ExpectBegin()
+	mock.ExpectQuery(`^INSERT INTO "users" (.+)$`).
+		WithArgs(
+			username,
+			passwordHash,
+		).
+		WillReturnError(gorm.ErrInvalidDB)
+	mock.ExpectRollback()
+
+	usr, err := storageService.CreateAccount(ctx, username, passwordHash)
+
+	require.NoError(t, mock.ExpectationsWereMet())
+	require.ErrorIs(t, err, storage.ErrDatabaseError)
+	require.ErrorIs(t, err, gorm.ErrInvalidDB)
+	require.Nil(t, usr)
+}
